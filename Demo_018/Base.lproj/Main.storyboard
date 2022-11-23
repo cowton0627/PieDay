@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="f7D-Uc-Kan">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="f7D-Uc-Kan">
     <device id="retina5_9" orientation="portrait" appearance="light"/>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -314,7 +315,7 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="monthDeposit" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bAk-qf-6qT" userLabel="薪減食房雜">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bAk-qf-6qT" userLabel="薪減食房雜">
                                 <rect key="frame" x="116" y="279" width="180" height="45"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="45" id="02m-zE-cpJ"/>
@@ -332,7 +333,7 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="19"/>
                                 <textInputTraits key="textInputTraits"/>
                                 <connections>
-                                    <action selector="targetEntered:" destination="L41-qY-Vkq" eventType="editingDidEnd" id="bbr-n5-htv"/>
+                                    <action selector="targetEntered:" destination="L41-qY-Vkq" eventType="editingChanged" id="ryz-bV-TI7"/>
                                 </connections>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="元" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aIp-sd-Vvl" userLabel="欲存元">
@@ -398,7 +399,7 @@
                     <tabBarItem key="tabBarItem" title="" systemItem="recents" id="guh-85-iwW" userLabel="存款"/>
                     <navigationItem key="navigationItem" id="hnO-VU-ULA"/>
                     <connections>
-                        <outlet property="depositTextField" destination="bAk-qf-6qT" id="BQv-2X-wrt"/>
+                        <outlet property="depositLabel" destination="bAk-qf-6qT" id="e73-NM-w5h"/>
                         <outlet property="targetTextField" destination="wc6-0v-T9v" id="rXW-r5-gNy"/>
                     </connections>
                 </viewController>
@@ -412,6 +413,7 @@
                 <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="f7D-Uc-Kan" sceneMemberID="viewController">
                     <toolbarItems/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="2MQ-Bl-M87">
+                        <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="barTintColor" red="1" green="0.80000000000000004" blue="0.0" alpha="0.80182885179999996" colorSpace="custom" customColorSpace="sRGB"/>

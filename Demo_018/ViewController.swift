@@ -13,6 +13,9 @@ import SwiftUI
 //    func receiveData(data: String)
 //}
 
+// 以全域變數儲存
+var data: Double?
+
 //MARK: 月開支表，首頁
 class ViewController: UIViewController {
 
@@ -138,7 +141,7 @@ class ViewController: UIViewController {
             let loan = Double(loanTextField.text ?? "0"),
             let others = Double(othersTextField.text ?? "0") {
             
-            let result = salary - eat - loan - others
+            var result = salary - eat - loan - others
             percentages.append(salaryRatio(something: eat, salary: salary))
             percentages.append(salaryRatio(something: loan, salary: salary))
             percentages.append(salaryRatio(something: others, salary: salary))
@@ -155,9 +158,11 @@ class ViewController: UIViewController {
             drawing()
 //            delegate?.receiveData(data: String(result))
             
-            if let depositVC = self.tabBarController?.viewControllers?[1] as? DepositViewController {
-                depositVC.depositLabel.text = "\(result)"
-            }
+//            if let depositVC = self.tabBarController?.viewControllers?[1] as? DepositViewController {
+//                depositVC.depositLabel.text = "\(result)"
+//            }
+            
+            data = result
             
         } else {
             // 若有欄位空則出現 Alert
@@ -268,14 +273,21 @@ class ViewController: UIViewController {
         let aDegree = CGFloat.pi / 180
         let radius: CGFloat = 60
         var startDegree: CGFloat = 270
-        let myView = UIView(frame: CGRect(x: 0, y: 0, width: 2 * radius, height: 2 * radius))
+        let myView = UIView(frame: CGRect(x: 0,
+                                          y: 0,
+                                          width: 2 * radius,
+                                          height: 2 * radius))
         
         for percentage in percentages {
-            let endDegree = startDegree + 360 * percentage / 100
+            let endDegree = startDegree + ( 360 * percentage / 100 )
         
             let percentagePath = UIBezierPath()
             percentagePath.move(to: myView.center)
-            percentagePath.addArc(withCenter: myView.center, radius: radius, startAngle: aDegree *  startDegree, endAngle: aDegree * endDegree, clockwise: true)
+            percentagePath.addArc(withCenter: myView.center,
+                                  radius: radius,
+                                  startAngle: aDegree * startDegree,
+                                  endAngle: aDegree * endDegree,
+                                  clockwise: true)
         
             let percentageLayer = CAShapeLayer()
             percentageLayer.path = percentagePath.cgPath
@@ -286,7 +298,8 @@ class ViewController: UIViewController {
             startDegree = endDegree
         }
         
-        myView.center = CGPoint(x: fullScreenSize.width/2, y: fullScreenSize.height/1.45)
+        myView.center = CGPoint(x: fullScreenSize.width/2,
+                                y: fullScreenSize.height/1.45)
         self.view.addSubview(myView)
     }
     
