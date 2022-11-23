@@ -7,24 +7,24 @@
 
 import UIKit
 
-
-
 class DepositViewController: UIViewController, UITextFieldDelegate {
 //    func receiveData(data: String) {
-//        depositTextField.text = data
+//        depositLabel.text = String(format: "%.0f", data)
 //    }
     
+    
     @IBOutlet weak var targetTextField: UITextField!
-    @IBOutlet weak var depositTextField: UILabel!
+    @IBOutlet weak var depositLabel: UILabel!
     
     var percent: Double = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         targetTextField.delegate = self
-        depositTextField.text = String(format: "%.0f", result)
-        
-        
+//        depositTextField.text = String(format: "%.0f", result)
+        if let percent = Double(depositLabel.text ?? "0") {
+            self.percent = percent
+        }
     }
     
     func drawing(percentage: CGFloat) -> UIView {
@@ -75,7 +75,7 @@ class DepositViewController: UIViewController, UITextFieldDelegate {
     
     
     @IBAction func targetEntered(_ sender: UITextField) {
-        if let deposit = Double(depositTextField.text ?? "0"), let target =  Double(targetTextField.text ?? "0") {
+        if let deposit = Double(depositLabel.text ?? "0"), let target =  Double(targetTextField.text ?? "0") {
             percent = deposit / target
         } else {
             let alertController = UIAlertController(title: "Caution", message: "Do not leave target field blank", preferredStyle: .alert)
