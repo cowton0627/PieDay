@@ -8,333 +8,339 @@
 import UIKit
 import SwiftUI
 
-// VC 開一個接口傳值
-//protocol ViewControllerDelegate: AnyObject {
+//protocol SendData: class {
 //    func receiveData(data: String)
-//} 123
+//}
+var result: Double = 0
 
-// 以全域變數儲存
-var data: Double?
-
-//MARK: 月開支表，首頁
 class ViewController: UIViewController {
 
-//    weak var delegate: ViewControllerDelegate?
+//    weak var delegate: SendData?
     
-    //MARK: - IBOutlet
-    // 輸入框
+    // MARK: - IBOutlet
+    // 輸入欄位
     @IBOutlet weak var salaryTextField: UITextField!
     @IBOutlet weak var eatTextField: UITextField!
     @IBOutlet weak var loanTextField: UITextField!
     @IBOutlet weak var othersTextField: UITextField!
-    // 顯示百分佔比
+    // 百分比呈現
     @IBOutlet weak var eatPrecentageLabel: UILabel!
     @IBOutlet weak var loanPrecentageLabel: UILabel!
     @IBOutlet weak var othersPrecentageLabel: UILabel!
-    //MARK: - Properties
-    // 百分佔比
-//    var eatSalaryRatio: Double = 0
-//    var loanSalaryRatio: Double = 0
-//    var othersSalaryRatio: Double = 0
-//    var lastRatio: Double = 0
-//    var result: Double = 0
+    // MARK: - Properties
+    private let screenSize = UIScreen.main.bounds.size
+    private let radian = CGFloat.pi / 180
+    // 百分比預算
+//    private var eatSalaryRatio: Double = 0
+//    private var loanSalaryRatio: Double = 0
+//    private var othersSalaryRatio: Double = 0
+//    private var lastRatio: Double = 0
     
-    // 繪圖所需百分佔比
-    var percentages: [CGFloat] = []
-
+    private var percentDict: [String:CGFloat] = [:]
+    private var percentages: [CGFloat] = []
     
-    //MARK: - Life Cycle
+    private var drawingCount = 0
+    private var pieCount = 0
+    private var donutCount = 0
+    private let radius: CGFloat = 110
+    
+    var sharedData: Double?
+    
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        keyboardReturn()
-        
-        let pathView = UIView(frame: view.frame)
-        pathView.backgroundColor = .red
-        
-        //試畫三角路徑
-//        let path = UIBezierPath()
-//        path.move(to: CGPoint(x: 100, y: 100))
-//        path.addLine(to: CGPoint(x: 200, y: 100))
-//        path.addLine(to: CGPoint(x: 200, y: 200))
-//        path.close()
-//
-//        let shapeLayer = CAShapeLayer()
-//        shapeLayer.path = path.cgPath
-//        pathView.layer.mask = shapeLayer
-//
-//        view.addSubview(pathView)
-        
-        //試畫圓餅路徑1
-//        let aDegree = CGFloat.pi
-//
-//        let path = UIBezierPath()
-//        path.move(to: CGPoint(x: 200, y: 450))
-//        path.addArc(withCenter: CGPoint(x: 200, y: 450),
-//                    radius: 100,
-//                    startAngle: aDegree * 0,
-//                    endAngle: aDegree * 2, clockwise: true)
-//
-//        let shapeLayer = CAShapeLayer()
-//        shapeLayer.path = path.cgPath
-//        pathView.layer.mask = shapeLayer
-//
-//        view.addSubview(pathView)
-        
-        //試畫圓餅路徑2（其實是換一個方式畫三角）
-//        let aDegree = CGFloat.pi
-//        let path = UIBezierPath(arcCenter: CGPoint(x: 250, y: 500),
-//                                radius: 0,
-//                                startAngle: aDegree * 0,
-//                                endAngle: aDegree * 0, clockwise: true)
-//        path.addLine(to: CGPoint(x: 150, y: 500))
-//        path.addArc(withCenter: CGPoint(x: 200, y: 400),
-//                    radius: 0,
-//                    startAngle: aDegree * 0,
-//                    endAngle: aDegree * 0, clockwise: true)
-//
-//        let shapeLayer = CAShapeLayer()
-//        shapeLayer.path = path.cgPath
-//        pathView.layer.mask = shapeLayer
-//
-//        view.addSubview(pathView)
-        
-        //試畫圓環路徑1
-//        let lineWidth: CGFloat = 150
-//        let radius: CGFloat = 50
-//
-//        let circlePath = UIBezierPath(ovalIn: CGRect(x: lineWidth,
-//                                                     y: lineWidth,
-//                                                     width: radius * 2,
-//                                                     height: radius * 2))
-//
-//        let circleLayer = CAShapeLayer()
-//        circleLayer.path = circlePath.cgPath
-//
-//        circleLayer.strokeColor = UIColor.systemGray6.cgColor
-//        circleLayer.lineWidth = 5
-//        circleLayer.fillColor = UIColor.clear.cgColor
-//
-//        pathView.layer.mask = circleLayer
-//
-//        view.addSubview(pathView)
-        
-        
+        configureUI()
     }
     
-    // 首頁不顯示 Navigation Bar，但螢幕反應時間會看到上方閃過黑條
     override func viewWillAppear(_ animated: Bool) {
-        navigationController?.setNavigationBarHidden(true, animated: true)
-        super.viewWillAppear(animated)
-    }
-    override func viewWillDisappear(_ animated: Bool) {
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        super.viewWillDisappear(animated)
-    }
-    
-
-    //MARK: - IBAction
-    @IBAction func resultBtnPressed(_ sender: UIButton) {
-//        UserDefaults.setValue(result, forKey: "monthDeposit")
-
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let eat =  Double(eatTextField.text ?? "0"),
-            let loan = Double(loanTextField.text ?? "0"),
-            let others = Double(othersTextField.text ?? "0") {
-            
-            var result = salary - eat - loan - others
-            percentages.append(salaryRatio(something: eat, salary: salary))
-            percentages.append(salaryRatio(something: loan, salary: salary))
-            percentages.append(salaryRatio(something: others, salary: salary))
-            percentages.append(salaryRatio(something: result, salary: salary))
-//            eatSalaryRatio = eat / salary * 100
-//            loanSalaryRatio = loan / salary * 100
-//            othersSalaryRatio = others / salary * 100
-//            lastRatio = result / salary * 100
-//
-//            percentages.append(CGFloat(eatSalaryRatio))
-//            percentages.append(CGFloat(loanSalaryRatio))
-//            percentages.append(CGFloat(othersSalaryRatio))
-//            percentages.append(CGFloat(lastRatio))
-            drawing()
-//            delegate?.receiveData(data: String(result))
-            
-//            if let depositVC = self.tabBarController?.viewControllers?[1] as? DepositViewController {
-//                depositVC.depositLabel.text = "\(result)"
-//            }
-            
-            data = result
-            
-        } else {
-            // 若有欄位空則出現 Alert
-            let alertController = UIAlertController(title: "Caution",
-                                                    message: "Don't leave any blank",
-                                                    preferredStyle: .alert)
-            let notOkAction = UIAlertAction(title: "Back",
-                                            style: .cancel,
-                                            handler: nil)
-            alertController.addAction(notOkAction)
-            present(alertController, animated: true, completion: nil)
-        }
-                
-    }
-    
-    @IBAction func salaryEntered(_ sender: UITextField) {
-        if let salary = Double(salaryTextField.text ?? "0") {
-            
-            if let eat = Double(eatTextField.text ?? "0") {
-                eatPrecentageLabel.text = String(format: "%.1f",
-                                                 eat / salary * 100) + "%"
-            } else { eatPrecentageLabel.text = "0.0%" }
-            
-            if let loan = Double(loanTextField.text ?? "0") {
-                loanPrecentageLabel.text = String(format: "%.1f",
-                                                  loan / salary * 100) + "%"
-            } else { loanPrecentageLabel.text = "0.0%" }
-            
-            if let others = Double(othersTextField.text ?? "0") {
-                othersPrecentageLabel.text = String(format: "%.1f",
-                                                    others / salary * 100) + "%"
-            } else { othersPrecentageLabel.text = "0.0%" }
-            
-        }
-        
-//        if let salary = Double(salaryTextField.text ?? "0"),
-//            let eat = Double(eatTextField.text ?? "0") {
-////            eatSalaryRatio = eat / salary * 100
-//            eatPrecentageLabel.text = String(format: "%.1f",
-//                                             eat / salary * 100) + "%"
-//            print("\(salary)")
-//
-//        } else {
-//            eatPrecentageLabel.text = "0.0%"
-//        }
-        
-//        if let salary = Double(salaryTextField.text ?? "0"),
-//            let loan = Double(loanTextField.text ?? "0") {
-////            loanSalaryRatio = loan / salary * 100
-//            loanPrecentageLabel.text = String(format: "%.1f",
-//                                              loan / salary * 100) + "%"
-//        } else {
-//            loanPrecentageLabel.text = "0.0%"
-//        }
-        
-//        if let salary = Double(salaryTextField.text ?? "0"),
-//            let others = Double(othersTextField.text ?? "0") {
-////            othersSalaryRatio = others / salary * 100
-//            othersPrecentageLabel.text = String(format: "%.1f",
-//                                                others / salary * 100) + "%"
-//        } else {
-//            othersPrecentageLabel.text = "0.0%"
-//        }
-        
-    }
-    
-    @IBAction func eatEntered(_ sender: UITextField) {
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let eat = Double(eatTextField.text ?? "0") {
-//                eatSalaryRatio = eat / salary * 100
-                eatPrecentageLabel.text = String(format: "%.1f",
-                                                 eat / salary * 100) + "%"
+        if let sharedData = sharedData {
+            othersTextField.text = "\(sharedData)"
         }
     }
     
-    @IBAction func loanEntered(_ sender: UITextField) {
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let loan = Double(loanTextField.text ?? "0") {
-//                loanSalaryRatio = loan / salary * 100
-                loanPrecentageLabel.text = String(format: "%.1f",
-                                                  loan / salary * 100) + "%"
-        }
-    }
-    
-    @IBAction func othersEntered(_ sender: UITextField) {
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let others = Double(othersTextField.text ?? "0") {
-//            othersSalaryRatio = others / salary * 100
-            othersPrecentageLabel.text = String(format: "%.1f",
-                                                others / salary * 100) + "%"
-        }
-    }
-    
-    //MARK: - Methods
-    private func keyboardReturn() {
-        salaryTextField.delegate = self
-        eatTextField.delegate = self
-        loanTextField.delegate = self
-        othersTextField.delegate = self
-    }
-    
-    private func salaryRatio(something: Double, salary: Double) -> CGFloat {
-        CGFloat(something / salary * 100)
-    }
-    
-    private func drawing() {
-        let fullScreenSize = UIScreen.main.bounds.size
-        let aDegree = CGFloat.pi / 180
-        let radius: CGFloat = 60
+    // MARK: - Private Functions
+    private func drawPie() {
+        let radius = self.radius
         var startDegree: CGFloat = 270
         let myView = UIView(frame: CGRect(x: 0,
                                           y: 0,
                                           width: 2 * radius,
                                           height: 2 * radius))
         
-        for percentage in percentages {
-            let endDegree = startDegree + ( 360 * percentage / 100 )
-        
+        for (key,value) in percentDict {
+            let endDegree = startDegree + 360 * (value / 100)
+
             let percentagePath = UIBezierPath()
             percentagePath.move(to: myView.center)
             percentagePath.addArc(withCenter: myView.center,
                                   radius: radius,
-                                  startAngle: aDegree * startDegree,
-                                  endAngle: aDegree * endDegree,
+                                  startAngle: startDegree * radian,
+                                  endAngle: endDegree * radian,
                                   clockwise: true)
-        
+
             let percentageLayer = CAShapeLayer()
             percentageLayer.path = percentagePath.cgPath
             
-            percentageLayer.fillColor  = UIColor(red: CGFloat.random(in: 0...1), green: CGFloat.random(in: 0...1), blue: CGFloat.random(in: 0...1), alpha: 1).cgColor
-            
+            if key == "eat" { percentageLayer.fillColor = UIColor.systemBlue.cgColor }
+            else if key == "loan" { percentageLayer.fillColor = UIColor.systemYellow.cgColor }
+            else if key == "others" { percentageLayer.fillColor = UIColor.systemGreen.cgColor }
+            else if key == "last" { percentageLayer.fillColor = UIColor.systemOrange.cgColor }
+
             myView.layer.addSublayer(percentageLayer)
             startDegree = endDegree
         }
-        
-        myView.center = CGPoint(x: fullScreenSize.width/2,
-                                y: fullScreenSize.height/1.45)
+//        for percentage in percentages {
+//            let endDegree = startDegree + 360 * percentage / 100
+//
+//            let percentagePath = UIBezierPath()
+//            percentagePath.move(to: myView.center)
+//            percentagePath.addArc(withCenter: myView.center,
+//                                  radius: radius,
+//                                  startAngle: aDegree *  startDegree,
+//                                  endAngle: aDegree * endDegree,
+//                                  clockwise: true)
+//            let percentageLayer = CAShapeLayer()
+//            percentageLayer.path = percentagePath.cgPath
+//
+//            percentageLayer.fillColor  = UIColor(red: CGFloat.random(in: 0...1),
+//                                                 green: CGFloat.random(in: 0...1),
+//                                                 blue: CGFloat.random(in: 0...1),
+//                                                 alpha: 1).cgColor
+//
+//            myView.layer.addSublayer(percentageLayer)
+//            startDegree = endDegree
+//        }
+        myView.center = CGPoint(x: screenSize.width / 2,
+                                y: screenSize.height / 1.45)
         self.view.addSubview(myView)
     }
     
-    // 按下其他非輸入框的位置，鍵盤收回
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    private func drawDonut() {
+        let radius = self.radius
+        let lineWidth: CGFloat = 40.0
+        let center = CGPoint(x: screenSize.width / 2,
+                             y: screenSize.height / 1.45)
+        let ringPath = UIBezierPath(arcCenter: center,
+                                    radius: radius - lineWidth / 2,
+                                    startAngle: 270 * radian,
+                                    endAngle: -90 * radian,
+                                    clockwise: false)
+        let backgroundLayer = CAShapeLayer()
+        backgroundLayer.path = ringPath.cgPath
+        backgroundLayer.strokeColor = UIColor.systemGray.cgColor
+        backgroundLayer.fillColor = UIColor.clear.cgColor
+        backgroundLayer.lineWidth = lineWidth
+        view.layer.addSublayer(backgroundLayer)
+
+        var startDegree: CGFloat = 270
+//        for (key, value) in percentDict {
+//            let endDegree = startDegree - 360 * value / 100
+//            let percentagePath = UIBezierPath(arcCenter: center,
+//                                              radius: radius - lineWidth / 2,
+//                                              startAngle: startDegree * radian,
+//                                              endAngle: endDegree * radian,
+//                                              clockwise: false)
+//            let percentageLayer = CAShapeLayer()
+//            percentageLayer.path = percentagePath.cgPath
+//
+//            if key == "eat" { percentageLayer.fillColor = UIColor.systemYellow.cgColor }
+//            else if key == "loan" { percentageLayer.fillColor = UIColor.systemBrown.cgColor }
+//            else if key == "others" { percentageLayer.fillColor = UIColor.systemOrange.cgColor }
+//            else if key == "last" { percentageLayer.fillColor = UIColor.purple.cgColor }
+//
+//            percentageLayer.fillColor = UIColor.clear.cgColor
+//            percentageLayer.lineWidth = lineWidth
+//            view.layer.addSublayer(percentageLayer)
+//            startDegree = endDegree
+//        }
+        
+        for percentage in percentages {
+            let endDegree = startDegree - 360 * percentage / 100
+            let percentagePath = UIBezierPath(arcCenter: center,
+                                              radius: radius - lineWidth / 2,
+                                              startAngle: startDegree * radian,
+                                              endAngle: endDegree * radian,
+                                              clockwise: false)
+            let percentageLayer = CAShapeLayer()
+            percentageLayer.path = percentagePath.cgPath
+
+            percentageLayer.strokeColor = UIColor(red: CGFloat.random(in: 0...1),
+                                                  green: CGFloat.random(in: 0...1),
+                                                  blue: CGFloat.random(in: 0...1),
+                                                  alpha: 1).cgColor
+            percentageLayer.fillColor = UIColor.clear.cgColor
+            percentageLayer.lineWidth = lineWidth
+            view.layer.addSublayer(percentageLayer)
+            startDegree = endDegree
+        }
+    }
+    
+    private func configureUI() {
+        salaryTextField.delegate = self
+        eatTextField.delegate = self
+        loanTextField.delegate = self
+        othersTextField.delegate = self
+//        othersTextField.text = "\(firstPageBalance)"
+    }
+    
+    private func showBlankAlert() {
+        let alertController = UIAlertController(title: "Caution",
+                                                message: "Do not leave any fields blank",
+                                                preferredStyle: .alert)
+        let notOkAction = UIAlertAction(title: "Back", style: .cancel, handler: nil)
+        alertController.addAction(notOkAction)
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    // MARK: - IBAction
+    @IBAction func pieChartBtnPressed(_ sender: UIButton) {
+        if let salary = Double(salaryTextField.text ?? "0"),
+            let eat =  Double(eatTextField.text ?? "0"),
+            let loan = Double(loanTextField.text ?? "0"),
+            let others = Double(othersTextField.text ?? "0") {
+            result = salary - eat - loan - others
+            let eatRatio = eat / salary * 100
+            let loanRatio = loan / salary * 100
+            let othersRatio = others / salary * 100
+            let lastRatio = result / salary * 100
+            
+            percentDict["eat"] = CGFloat(eatRatio)
+            percentDict["loan"] = CGFloat(loanRatio)
+            percentDict["others"] = CGFloat(othersRatio)
+            percentDict["last"] = CGFloat(lastRatio)
+            drawPie()
+    
+        } else {
+            showBlankAlert()
+        }
+        
+//        UserDefaults.setValue(result, forKey: "monthDeposit")
+        print(result)
+//        delegate?.receiveData(data: String(result))
+        pieCount += 1
+    }
+    
+    @IBAction func donutChartBtnPressed(_ sender: UIButton) {
+        // Pie Chart 畫完後要移除
+        if pieCount > 0 {
+            for _ in 0...(pieCount-1) {
+                view.subviews.last?.removeFromSuperview()
+                pieCount = 0
+            }
+        }
+
+        if let salary = Double(salaryTextField.text ?? "0"),
+            let eat =  Double(eatTextField.text ?? "0"),
+            let loan = Double(loanTextField.text ?? "0"),
+            let others = Double(othersTextField.text ?? "0") {
+            result = salary - eat - loan - others
+            let eatRatio = eat / salary * 100
+            let loanRatio = loan / salary * 100
+            let othersRatio = others / salary * 100
+            let lastRatio = result / salary * 100
+    
+            percentages.append(CGFloat(eatRatio))
+            percentages.append(CGFloat(loanRatio))
+            percentages.append(CGFloat(othersRatio))
+            percentages.append(CGFloat(lastRatio))
+            drawDonut()
+            
+        } else {
+            showBlankAlert()
+        }
+        
+        print(result)
+        // 但 Donut Chart 無論怎麼畫, view.subviews.last 都沒有增加, 所以不做移除
+        donutCount += 1
+        
+    }
+    
+    @IBAction func salaryEntered(_ sender: UITextField) {
+        guard let salary = Double(salaryTextField.text ?? "0") else { return }
+        
+        if let eat = Double(eatTextField.text ?? "") {
+            eatPrecentageLabel.text = String(format: "%.1f", eat / salary * 100) + "%"
+        } else {
+            eatPrecentageLabel.text = "0.0" + "%"
+        }
+        
+        if let loan = Double(loanTextField.text ?? "0") {
+            loanPrecentageLabel.text = String(format: "%.1f", loan / salary * 100) + "%"
+        } else {
+            loanPrecentageLabel.text = "0.0" + "%"
+        }
+        
+        if let others = Double(othersTextField.text ?? "0") {
+            othersPrecentageLabel.text = String(format: "%.1f", others / salary * 100) + "%"
+        } else {
+            othersPrecentageLabel.text = "0.0%"
+        }
+        
+    }
+    
+    @IBAction func eatEntered(_ sender: UITextField) {
+        guard let salary = Double(salaryTextField.text ?? "0") else { return }
+        if let eat = Double(eatTextField.text ?? "0") {
+            eatPrecentageLabel.text = String(format: "%.1f", eat / salary * 100) + "%"
+        }
+
+    }
+    @IBAction func loanEntered(_ sender: UITextField) {
+        guard let salary = Double(salaryTextField.text ?? "0") else { return }
+        if let loan = Double(loanTextField.text ?? "0") {
+            loanPrecentageLabel.text = String(format: "%.1f", loan / salary * 100) + "%"
+        }
+    }
+    @IBAction func othersEntered(_ sender: UITextField) {
+        guard let salary = Double(salaryTextField.text ?? "0") else { return }
+        if let others = Double(othersTextField.text ?? "0") {
+            othersPrecentageLabel.text = String(format: "%.1f", others / salary * 100) + "%"
+        }
+    }
+    
+    // 點旁邊鍵盤收回
+    override func touchesBegan(_ touches: Set<UITouch>,
+                               with event: UIEvent?) {
         self.view.endEditing(true)
     }
+
 }
 
-//MARK: - UITextFieldDelegate
 extension ViewController: UITextFieldDelegate {
-    // 按下 Return 鍵盤收回
+    // 點 return 鍵盤收回
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
     }
+    // 保證使用者輸入數字或小數點
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
+        let allowedCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "."))
+        return string.rangeOfCharacter(from: allowedCharacters.inverted) == nil
+    }
 }
 
-
-// 使用 SwiftUI 的預覽功能
-struct ViewControllerView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> ViewController {
-        UIStoryboard(name: "Main", bundle: nil)
-            .instantiateViewController(identifier: "\(ViewController.self)") as! ViewController
-    }
-    
-    func updateUIViewController(_ uiViewController: ViewController, context: Context) { }
-    
+// 嫁接 SwiftUI 預覽功能
+//struct ViewControllerView: UIViewControllerRepresentable {
+//    func makeUIViewController(context: Context) -> ViewController {
+//         let sb = UIStoryboard(name: "Main", bundle: nil)
+//         let vc = sb.instantiateViewController(identifier: "ViewController") as! ViewController
+//         return vc
+//    }
+//
+//    func updateUIViewController(_ uiViewController: ViewController,
+//                                context: Context) {
+//    }
+//
 //    typealias UIViewControllerType = ViewController
-}
+//}
 
-struct ViewControllerView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            ViewControllerView()
-                .previewDevice("iPhone 12 mini")
-        }
-    }
-}
+// 設定 SwiftUI 預覽
+//struct ViewControllerView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        Group {
+//            ViewControllerView()
+//                .previewDevice("iPhone 14 Pro")
+//        }
+//    }
+//}

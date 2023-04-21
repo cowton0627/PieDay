@@ -14,6 +14,7 @@
 		2980808C26B43076006082CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2980808B26B43076006082CA /* Assets.xcassets */; };
 		2980808F26B43076006082CA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2980808D26B43076006082CA /* LaunchScreen.storyboard */; };
 		29CA8DE026B510B7005CBFE7 /* DepositViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA8DDF26B510B6005CBFE7 /* DepositViewController.swift */; };
+		91B540D429F2AD220016E11E /* TransactionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B540D329F2AD220016E11E /* TransactionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		2980808E26B43076006082CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2980809026B43076006082CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		29CA8DDF26B510B6005CBFE7 /* DepositViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositViewController.swift; sourceTree = "<group>"; };
+		91B540D329F2AD220016E11E /* TransactionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,9 +62,10 @@
 			children = (
 				2980808226B43071006082CA /* AppDelegate.swift */,
 				2980808426B43071006082CA /* SceneDelegate.swift */,
+				91B540D329F2AD220016E11E /* TransactionViewController.swift */,
 				2980808626B43071006082CA /* ViewController.swift */,
-				29CA8DDF26B510B6005CBFE7 /* DepositViewController.swift */,
 				2980808826B43071006082CA /* Main.storyboard */,
+				29CA8DDF26B510B6005CBFE7 /* DepositViewController.swift */,
 				2980808B26B43076006082CA /* Assets.xcassets */,
 				2980808D26B43076006082CA /* LaunchScreen.storyboard */,
 				2980809026B43076006082CA /* Info.plist */,
@@ -140,6 +143,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91B540D429F2AD220016E11E /* TransactionViewController.swift in Sources */,
 				2980808726B43071006082CA /* ViewController.swift in Sources */,
 				29CA8DE026B510B7005CBFE7 /* DepositViewController.swift in Sources */,
 				2980808326B43071006082CA /* AppDelegate.swift in Sources */,
