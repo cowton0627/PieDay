@@ -11,7 +11,7 @@ import SwiftUI
 // VC 開一個接口傳值
 //protocol ViewControllerDelegate: AnyObject {
 //    func receiveData(data: String)
-//}
+//} 123
 
 // 以全域變數儲存
 var data: Double?
