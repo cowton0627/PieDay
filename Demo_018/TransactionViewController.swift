@@ -29,7 +29,7 @@ class TransactionViewController: UIViewController {
             passDataToDestination()
         }
     }
-    
+    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         balanceLabel.text = "..."
@@ -37,8 +37,8 @@ class TransactionViewController: UIViewController {
         transactionTableView.dataSource = self
         transactionAmountTextField.delegate = self
     }
-    
-    func passDataToDestination() {
+    // MARK: - Private Functions
+    private func passDataToDestination() {
         guard let tabBarController = self.tabBarController,
               let viewControllers = tabBarController.viewControllers else { return }
 
@@ -46,14 +46,12 @@ class TransactionViewController: UIViewController {
             if let navigationController = viewController as? UINavigationController,
                let vc = navigationController.viewControllers.first as? ViewController {
                 vc.sharedData = balance
-//                break
             } else if let vc = viewController as? ViewController {
                 vc.sharedData = balance
-//                break
             }
         }
     }
-
+    // MARK: - IBOutlet
     @IBAction func addTransactionPressed(_ sender: UIButton) {
         guard let amountText = transactionAmountTextField.text,
               let amount = Double(amountText) else { return }
@@ -65,7 +63,7 @@ class TransactionViewController: UIViewController {
         transactionAmountTextField.text = nil
     }
 }
-
+// MARK: - UITableViewDataSource
 extension TransactionViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView,
                    numberOfRowsInSection section: Int) -> Int {
@@ -84,7 +82,7 @@ extension TransactionViewController: UITableViewDataSource {
         return cell
     }
 }
-
+// MARK: - UITextFieldDelegate
 extension TransactionViewController: UITextFieldDelegate {
     // 保證使用者輸入數字或小數點
     func textField(_ textField: UITextField,
