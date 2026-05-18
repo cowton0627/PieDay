@@ -1,346 +1,335 @@
-//
-//  ViewController.swift
-//  Demo_018
-//
-//  Created by 鄭淳澧 on 2021/7/30.
-//
-
 import UIKit
-import SwiftUI
 
-//protocol SendData: class {
-//    func receiveData(data: String)
-//}
-var result: Double = 0
+/// 預算 Dashboard：呈現 TransactionStore 各分類加總與比例圖。
+/// Storyboard 上 customClass 仍是 "ViewController"，這個 scene 的 view 已清空成空白 root，整個 UI 由本檔 code 建構。
+final class ViewController: UIViewController {
 
-class ViewController: UIViewController {
+    // MARK: - Section: Summary（按分類顯示金額與佔比）
+    private struct SummaryRow {
+        let category: TransactionCategory
+        let nameLabel = UILabel()
+        let amountLabel = UILabel()
+        let percentLabel = UILabel()
+        let colorDot = UIView()
+    }
 
-//    weak var delegate: SendData?
-    
-    // MARK: - IBOutlet
-    // 輸入欄位
-    @IBOutlet weak var salaryTextField: UITextField!
-    @IBOutlet weak var eatTextField: UITextField!
-    @IBOutlet weak var loanTextField: UITextField!
-    @IBOutlet weak var othersTextField: UITextField!
-    // 百分比呈現
-    @IBOutlet weak var eatPrecentageLabel: UILabel!
-    @IBOutlet weak var loanPrecentageLabel: UILabel!
-    @IBOutlet weak var othersPrecentageLabel: UILabel!
-    // MARK: - Properties
-    private let screenSize = UIScreen.main.bounds.size
-    private let radian = CGFloat.pi / 180
-    // 百分比預算
-//    private var eatSalaryRatio: Double = 0
-//    private var loanSalaryRatio: Double = 0
-//    private var othersSalaryRatio: Double = 0
-//    private var lastRatio: Double = 0
-    
-    private var percentDict: [String:CGFloat] = [:]
-    private var percentages: [CGFloat] = []
-    
-    private var drawingCount = 0
-    private var pieCount = 0
-    private var donutCount = 0
-    private let radius: CGFloat = 110
-    
-    var sharedData: Double?
-    
+    private var summaryRows: [TransactionCategory: SummaryRow] = [:]
+
+    // MARK: - Subviews
+    private let titleLabel: UILabel = {
+        let l = UILabel()
+        l.text = "月開支"
+        l.font = .systemFont(ofSize: 28, weight: .bold)
+        l.textAlignment = .center
+        return l
+    }()
+
+    private let summaryCard: UIView = {
+        let v = UIView()
+        v.backgroundColor = .secondarySystemGroupedBackground
+        v.layer.cornerRadius = 16
+        return v
+    }()
+
+    private let summaryStack: UIStackView = {
+        let s = UIStackView()
+        s.axis = .vertical
+        s.spacing = 12
+        s.alignment = .fill
+        s.distribution = .equalSpacing
+        s.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        s.isLayoutMarginsRelativeArrangement = true
+        return s
+    }()
+
+    private let chartHeaderLabel: UILabel = {
+        let l = UILabel()
+        l.text = "支出比例"
+        l.font = .systemFont(ofSize: 15, weight: .semibold)
+        l.textColor = .secondaryLabel
+        l.textAlignment = .center
+        return l
+    }()
+
+    private let chartContainer: UIView = {
+        let v = UIView()
+        v.backgroundColor = .secondarySystemGroupedBackground
+        v.layer.cornerRadius = 16
+        v.clipsToBounds = true
+        return v
+    }()
+
+    private let pieChartView = PieChartView()
+    private let donutChartView = DonutChartView()
+
+    private let pieButton: UIButton = {
+        let b = UIButton(type: .system)
+        b.setTitle("圓餅圖", for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        b.backgroundColor = .systemBlue
+        b.tintColor = .white
+        b.setTitleColor(.white, for: .normal)
+        b.layer.cornerRadius = 12
+        return b
+    }()
+
+    private let donutButton: UIButton = {
+        let b = UIButton(type: .system)
+        b.setTitle("環狀圖", for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        b.backgroundColor = .secondarySystemFill
+        b.tintColor = .label
+        b.setTitleColor(.label, for: .normal)
+        b.layer.cornerRadius = 12
+        return b
+    }()
+
+    private let buttonRow: UIStackView = {
+        let s = UIStackView()
+        s.axis = .horizontal
+        s.spacing = 12
+        s.distribution = .fillEqually
+        return s
+    }()
+
+    private let rootStack: UIStackView = {
+        let s = UIStackView()
+        s.axis = .vertical
+        s.spacing = 16
+        s.alignment = .fill
+        return s
+    }()
+
+    // MARK: - Private
+    private let store = TransactionStore.shared
+    private enum ChartMode { case none, pie, donut }
+    private var currentMode: ChartMode = .none
+
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureUI()
+        view.backgroundColor = .systemGroupedBackground
+        buildLayout()
+        wireActions()
+        observeStoreChanges()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
-        if let sharedData = sharedData {
-            othersTextField.text = "\(sharedData)"
+        super.viewWillAppear(animated)
+        refreshFromStore()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    // MARK: - Layout
+    private func buildLayout() {
+        buildSummaryRows()
+
+        view.addSubview(rootStack)
+        rootStack.translatesAutoresizingMaskIntoConstraints = false
+
+        summaryCard.addSubview(summaryStack)
+        summaryStack.translatesAutoresizingMaskIntoConstraints = false
+
+        chartContainer.addSubview(pieChartView)
+        chartContainer.addSubview(donutChartView)
+        pieChartView.translatesAutoresizingMaskIntoConstraints = false
+        donutChartView.translatesAutoresizingMaskIntoConstraints = false
+        pieChartView.isHidden = true
+        donutChartView.isHidden = true
+
+        buttonRow.addArrangedSubview(pieButton)
+        buttonRow.addArrangedSubview(donutButton)
+
+        rootStack.addArrangedSubview(titleLabel)
+        rootStack.addArrangedSubview(summaryCard)
+        rootStack.addArrangedSubview(chartHeaderLabel)
+        rootStack.addArrangedSubview(chartContainer)
+        rootStack.addArrangedSubview(buttonRow)
+
+        // Root stack 填滿 safeArea + padding
+        NSLayoutConstraint.activate([
+            rootStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            rootStack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            rootStack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
+
+            summaryStack.topAnchor.constraint(equalTo: summaryCard.topAnchor),
+            summaryStack.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor),
+            summaryStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor),
+            summaryStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor),
+
+            // 按鈕高度
+            pieButton.heightAnchor.constraint(equalToConstant: 48),
+        ])
+
+        // Chart 在 container 內居中 + 保持 1:1 + 最多占 container 85%（Pie 圓本身只佔 view 62%，外圍留給 leader line + label）
+        let chartFitRatio: CGFloat = 0.85
+        for chart in [pieChartView, donutChartView] as [UIView] {
+            NSLayoutConstraint.activate([
+                chart.centerXAnchor.constraint(equalTo: chartContainer.centerXAnchor),
+                chart.centerYAnchor.constraint(equalTo: chartContainer.centerYAnchor),
+                chart.widthAnchor.constraint(equalTo: chart.heightAnchor),
+                chart.widthAnchor.constraint(lessThanOrEqualTo: chartContainer.widthAnchor, multiplier: chartFitRatio),
+                chart.heightAnchor.constraint(lessThanOrEqualTo: chartContainer.heightAnchor, multiplier: chartFitRatio),
+            ])
+            let widthFill = chart.widthAnchor.constraint(equalTo: chartContainer.widthAnchor, multiplier: chartFitRatio)
+            let heightFill = chart.heightAnchor.constraint(equalTo: chartContainer.heightAnchor, multiplier: chartFitRatio)
+            widthFill.priority = .defaultHigh
+            heightFill.priority = .defaultHigh
+            widthFill.isActive = true
+            heightFill.isActive = true
+        }
+
+        // 讓 chart container 吃掉所有剩餘垂直空間
+        chartContainer.setContentHuggingPriority(.defaultLow, for: .vertical)
+        chartContainer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        titleLabel.setContentHuggingPriority(.required, for: .vertical)
+        summaryCard.setContentHuggingPriority(.required, for: .vertical)
+        chartHeaderLabel.setContentHuggingPriority(.required, for: .vertical)
+        buttonRow.setContentHuggingPriority(.required, for: .vertical)
+    }
+
+    private func buildSummaryRows() {
+        for category in TransactionCategory.allCases {
+            let row = SummaryRow(category: category)
+
+            row.colorDot.backgroundColor = category.color
+            row.colorDot.layer.cornerRadius = 6
+            row.colorDot.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                row.colorDot.widthAnchor.constraint(equalToConstant: 12),
+                row.colorDot.heightAnchor.constraint(equalToConstant: 12),
+            ])
+
+            row.nameLabel.text = category.displayName
+            row.nameLabel.font = .systemFont(ofSize: 17, weight: .medium)
+
+            row.amountLabel.text = "0"
+            row.amountLabel.font = .monospacedDigitSystemFont(ofSize: 17, weight: .semibold)
+            row.amountLabel.textAlignment = .right
+            row.amountLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+            row.percentLabel.text = "0.0%"
+            row.percentLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .regular)
+            row.percentLabel.textColor = .secondaryLabel
+            row.percentLabel.textAlignment = .right
+            row.percentLabel.setContentHuggingPriority(.required, for: .horizontal)
+            row.percentLabel.widthAnchor.constraint(equalToConstant: 60).isActive = true
+
+            // 收入分類（薪水）不顯示百分比
+            row.percentLabel.isHidden = category.isIncome
+
+            let rowStack = UIStackView(arrangedSubviews: [
+                row.colorDot, row.nameLabel, row.amountLabel, row.percentLabel
+            ])
+            rowStack.axis = .horizontal
+            rowStack.spacing = 10
+            rowStack.alignment = .center
+
+            summaryStack.addArrangedSubview(rowStack)
+            summaryRows[category] = row
         }
     }
-    
-    // MARK: - Private Functions
-    private func drawPie() {
-        let radius = self.radius
-        var startDegree: CGFloat = 270
-        let myView = UIView(frame: CGRect(x: 0,
-                                          y: 0,
-                                          width: 2 * radius,
-                                          height: 2 * radius))
-        
-        for (key,value) in percentDict {
-            let endDegree = startDegree + 360 * (value / 100)
 
-            let percentagePath = UIBezierPath()
-            percentagePath.move(to: myView.center)
-            percentagePath.addArc(withCenter: myView.center,
-                                  radius: radius,
-                                  startAngle: startDegree * radian,
-                                  endAngle: endDegree * radian,
-                                  clockwise: true)
-
-            let percentageLayer = CAShapeLayer()
-            percentageLayer.path = percentagePath.cgPath
-            
-            if key == "eat" { percentageLayer.fillColor = UIColor.systemBlue.cgColor }
-            else if key == "loan" { percentageLayer.fillColor = UIColor.systemYellow.cgColor }
-            else if key == "others" { percentageLayer.fillColor = UIColor.systemGreen.cgColor }
-            else if key == "last" { percentageLayer.fillColor = UIColor.systemOrange.cgColor }
-
-            myView.layer.addSublayer(percentageLayer)
-            startDegree = endDegree
-        }
-//        for percentage in percentages {
-//            let endDegree = startDegree + 360 * percentage / 100
-//
-//            let percentagePath = UIBezierPath()
-//            percentagePath.move(to: myView.center)
-//            percentagePath.addArc(withCenter: myView.center,
-//                                  radius: radius,
-//                                  startAngle: aDegree *  startDegree,
-//                                  endAngle: aDegree * endDegree,
-//                                  clockwise: true)
-//            let percentageLayer = CAShapeLayer()
-//            percentageLayer.path = percentagePath.cgPath
-//
-//            percentageLayer.fillColor  = UIColor(red: CGFloat.random(in: 0...1),
-//                                                 green: CGFloat.random(in: 0...1),
-//                                                 blue: CGFloat.random(in: 0...1),
-//                                                 alpha: 1).cgColor
-//
-//            myView.layer.addSublayer(percentageLayer)
-//            startDegree = endDegree
-//        }
-        myView.center = CGPoint(x: screenSize.width / 2,
-                                y: screenSize.height / 1.45)
-        self.view.addSubview(myView)
+    private func wireActions() {
+        pieButton.addTarget(self, action: #selector(pieTapped), for: .touchUpInside)
+        donutButton.addTarget(self, action: #selector(donutTapped), for: .touchUpInside)
     }
-    
-    private func drawDonut() {
-        let radius = self.radius
-        let lineWidth: CGFloat = 40.0
-        let center = CGPoint(x: screenSize.width / 2,
-                             y: screenSize.height / 1.45)
-        let ringPath = UIBezierPath(arcCenter: center,
-                                    radius: radius - lineWidth / 2,
-                                    startAngle: 270 * radian,
-                                    endAngle: -90 * radian,
-                                    clockwise: false)
-        let backgroundLayer = CAShapeLayer()
-        backgroundLayer.path = ringPath.cgPath
-        backgroundLayer.strokeColor = UIColor.systemGray.cgColor
-        backgroundLayer.fillColor = UIColor.clear.cgColor
-        backgroundLayer.lineWidth = lineWidth
-        view.layer.addSublayer(backgroundLayer)
 
-        var startDegree: CGFloat = 270
-//        for (key, value) in percentDict {
-//            let endDegree = startDegree - 360 * value / 100
-//            let percentagePath = UIBezierPath(arcCenter: center,
-//                                              radius: radius - lineWidth / 2,
-//                                              startAngle: startDegree * radian,
-//                                              endAngle: endDegree * radian,
-//                                              clockwise: false)
-//            let percentageLayer = CAShapeLayer()
-//            percentageLayer.path = percentagePath.cgPath
-//
-//            if key == "eat" { percentageLayer.fillColor = UIColor.systemYellow.cgColor }
-//            else if key == "loan" { percentageLayer.fillColor = UIColor.systemBrown.cgColor }
-//            else if key == "others" { percentageLayer.fillColor = UIColor.systemOrange.cgColor }
-//            else if key == "last" { percentageLayer.fillColor = UIColor.purple.cgColor }
-//
-//            percentageLayer.fillColor = UIColor.clear.cgColor
-//            percentageLayer.lineWidth = lineWidth
-//            view.layer.addSublayer(percentageLayer)
-//            startDegree = endDegree
-//        }
-        
-        for percentage in percentages {
-            let endDegree = startDegree - 360 * percentage / 100
-            let percentagePath = UIBezierPath(arcCenter: center,
-                                              radius: radius - lineWidth / 2,
-                                              startAngle: startDegree * radian,
-                                              endAngle: endDegree * radian,
-                                              clockwise: false)
-            let percentageLayer = CAShapeLayer()
-            percentageLayer.path = percentagePath.cgPath
+    private func observeStoreChanges() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(storeDidChange),
+            name: TransactionStore.didChangeNotification,
+            object: nil
+        )
+    }
 
-            percentageLayer.strokeColor = UIColor(red: CGFloat.random(in: 0...1),
-                                                  green: CGFloat.random(in: 0...1),
-                                                  blue: CGFloat.random(in: 0...1),
-                                                  alpha: 1).cgColor
-            percentageLayer.fillColor = UIColor.clear.cgColor
-            percentageLayer.lineWidth = lineWidth
-            view.layer.addSublayer(percentageLayer)
-            startDegree = endDegree
+    // MARK: - Display
+    @objc private func storeDidChange() {
+        refreshFromStore()
+        switch currentMode {
+        case .pie:   showChart(mode: .pie, animated: false)
+        case .donut: showChart(mode: .donut, animated: false)
+        case .none:  break
         }
     }
-    
-    private func configureUI() {
-        salaryTextField.delegate = self
-        eatTextField.delegate = self
-        loanTextField.delegate = self
-        othersTextField.delegate = self
-//        othersTextField.text = "\(firstPageBalance)"
-    }
-    
-    private func showBlankAlert() {
-        let alertController = UIAlertController(title: "Caution",
-                                                message: "Do not leave any fields blank",
-                                                preferredStyle: .alert)
-        let notOkAction = UIAlertAction(title: "Back", style: .cancel, handler: nil)
-        alertController.addAction(notOkAction)
-        present(alertController, animated: true, completion: nil)
-    }
-    
-    // MARK: - IBAction
-    @IBAction func pieChartBtnPressed(_ sender: UIButton) {
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let eat =  Double(eatTextField.text ?? "0"),
-            let loan = Double(loanTextField.text ?? "0"),
-            let others = Double(othersTextField.text ?? "0") {
-            result = salary - eat - loan - others
-            let eatRatio = eat / salary * 100
-            let loanRatio = loan / salary * 100
-            let othersRatio = others / salary * 100
-            let lastRatio = result / salary * 100
-            
-            percentDict["eat"] = CGFloat(eatRatio)
-            percentDict["loan"] = CGFloat(loanRatio)
-            percentDict["others"] = CGFloat(othersRatio)
-            percentDict["last"] = CGFloat(lastRatio)
-            drawPie()
-    
-        } else {
-            showBlankAlert()
-        }
-        
-//        UserDefaults.setValue(result, forKey: "monthDeposit")
-        print(result)
-//        delegate?.receiveData(data: String(result))
-        pieCount += 1
-    }
-    
-    @IBAction func donutChartBtnPressed(_ sender: UIButton) {
-        // Pie Chart 畫完後要移除
-        if pieCount > 0 {
-            for _ in 0...(pieCount-1) {
-                view.subviews.last?.removeFromSuperview()
-                pieCount = 0
+
+    private func refreshFromStore() {
+        let salary = store.total(for: .salary)
+        for (category, row) in summaryRows {
+            let amount = store.total(for: category)
+            row.amountLabel.text = String(format: "%.0f", amount)
+            if !category.isIncome {
+                row.percentLabel.text = salary > 0
+                    ? String(format: "%.1f%%", amount / salary * 100)
+                    : "—"
             }
         }
-
-        if let salary = Double(salaryTextField.text ?? "0"),
-            let eat =  Double(eatTextField.text ?? "0"),
-            let loan = Double(loanTextField.text ?? "0"),
-            let others = Double(othersTextField.text ?? "0") {
-            result = salary - eat - loan - others
-            let eatRatio = eat / salary * 100
-            let loanRatio = loan / salary * 100
-            let othersRatio = others / salary * 100
-            let lastRatio = result / salary * 100
-    
-            percentages.append(CGFloat(eatRatio))
-            percentages.append(CGFloat(loanRatio))
-            percentages.append(CGFloat(othersRatio))
-            percentages.append(CGFloat(lastRatio))
-            drawDonut()
-            
-        } else {
-            showBlankAlert()
-        }
-        
-        print(result)
-        // 但 Donut Chart 無論怎麼畫, view.subviews.last 都沒有增加, 所以不做移除
-        donutCount += 1
-        
-    }
-    
-    @IBAction func salaryEntered(_ sender: UITextField) {
-        guard let salary = Double(salaryTextField.text ?? "0") else { return }
-        
-        if let eat = Double(eatTextField.text ?? "") {
-            eatPrecentageLabel.text = String(format: "%.1f", eat / salary * 100) + "%"
-        } else {
-            eatPrecentageLabel.text = "0.0" + "%"
-        }
-        
-        if let loan = Double(loanTextField.text ?? "0") {
-            loanPrecentageLabel.text = String(format: "%.1f", loan / salary * 100) + "%"
-        } else {
-            loanPrecentageLabel.text = "0.0" + "%"
-        }
-        
-        if let others = Double(othersTextField.text ?? "0") {
-            othersPrecentageLabel.text = String(format: "%.1f", others / salary * 100) + "%"
-        } else {
-            othersPrecentageLabel.text = "0.0%"
-        }
-        
-    }
-    
-    @IBAction func eatEntered(_ sender: UITextField) {
-        guard let salary = Double(salaryTextField.text ?? "0") else { return }
-        if let eat = Double(eatTextField.text ?? "0") {
-            eatPrecentageLabel.text = String(format: "%.1f", eat / salary * 100) + "%"
-        }
-
-    }
-    @IBAction func loanEntered(_ sender: UITextField) {
-        guard let salary = Double(salaryTextField.text ?? "0") else { return }
-        if let loan = Double(loanTextField.text ?? "0") {
-            loanPrecentageLabel.text = String(format: "%.1f", loan / salary * 100) + "%"
-        }
-    }
-    @IBAction func othersEntered(_ sender: UITextField) {
-        guard let salary = Double(salaryTextField.text ?? "0") else { return }
-        if let others = Double(othersTextField.text ?? "0") {
-            othersPrecentageLabel.text = String(format: "%.1f", others / salary * 100) + "%"
-        }
-    }
-    
-    // 點旁邊鍵盤收回
-    override func touchesBegan(_ touches: Set<UITouch>,
-                               with event: UIEvent?) {
-        self.view.endEditing(true)
     }
 
-}
-
-extension ViewController: UITextFieldDelegate {
-    // 點 return 鍵盤收回
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
+    private func currentSlices() -> [ChartSlice] {
+        store.expenseRatiosAgainstSalary().map { entry in
+            let color = entry.category?.color ?? .systemGray
+            let label = entry.category?.displayName ?? "剩餘"
+            return ChartSlice(value: CGFloat(entry.ratio), color: color, label: label)
+        }
     }
-    // 保證使用者輸入數字或小數點
-    func textField(_ textField: UITextField,
-                   shouldChangeCharactersIn range: NSRange,
-                   replacementString string: String) -> Bool {
-        let allowedCharacters = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "."))
-        return string.rangeOfCharacter(from: allowedCharacters.inverted) == nil
+
+    private func showChart(mode: ChartMode, animated: Bool) {
+        let slices = currentSlices()
+        guard !slices.isEmpty else {
+            showEmptyDataAlert()
+            return
+        }
+        currentMode = mode
+
+        pieChartView.slices = slices
+        donutChartView.slices = slices
+        donutChartView.centerLabel.text = donutCenterText()
+
+        let apply: () -> Void = {
+            self.pieChartView.isHidden = (mode != .pie)
+            self.donutChartView.isHidden = (mode != .donut)
+        }
+
+        if animated {
+            UIView.transition(with: chartContainer,
+                              duration: 0.25,
+                              options: [.transitionCrossDissolve],
+                              animations: apply)
+        } else {
+            apply()
+        }
+    }
+
+    private func donutCenterText() -> String {
+        let remaining = store.total(for: .salary)
+            - store.total(for: .food)
+            - store.total(for: .loan)
+            - store.total(for: .others)
+        return String(format: "結餘\n%.0f", remaining)
+    }
+
+    private func showEmptyDataAlert() {
+        let alert = UIAlertController(
+            title: "尚無資料",
+            message: "請先到 Transaction 分頁新增「薪水」收入與支出項目，再回來查看比例。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "好", style: .default))
+        present(alert, animated: true)
+    }
+
+    // MARK: - Actions
+    @objc private func pieTapped() {
+        showChart(mode: .pie, animated: true)
+    }
+
+    @objc private func donutTapped() {
+        showChart(mode: .donut, animated: true)
     }
 }
-
-// 嫁接 SwiftUI 預覽功能
-//struct ViewControllerView: UIViewControllerRepresentable {
-//    func makeUIViewController(context: Context) -> ViewController {
-//         let sb = UIStoryboard(name: "Main", bundle: nil)
-//         let vc = sb.instantiateViewController(identifier: "ViewController") as! ViewController
-//         return vc
-//    }
-//
-//    func updateUIViewController(_ uiViewController: ViewController,
-//                                context: Context) {
-//    }
-//
-//    typealias UIViewControllerType = ViewController
-//}
-
-// 設定 SwiftUI 預覽
-//struct ViewControllerView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        Group {
-//            ViewControllerView()
-//                .previewDevice("iPhone 14 Pro")
-//        }
-//    }
-//}
