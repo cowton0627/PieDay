@@ -1,6 +1,12 @@
-# Demo_018 — 記帳 App
+<p align="center">
+  <img src="docs/icon-1024.png" width="120" alt="PieDay icon" />
+</p>
 
-UIKit + Swift 練習作。用 `UIBezierPath` 自繪圓餅圖／環狀圖，加 leader lines 標示分類百分比。
+# PieDay (Demo_018) — 簡易記帳軟體
+
+於「交易」頁逐筆新增收入／支出並指定分類，資料即時寫入 `TransactionStore` 並持久化。切到「預算」頁可看到各分類金額與佔薪水百分比的即時計算；按下「圓餅圖」或「環狀圖」呈現比例 — 圓餅圖每片以拉線標出分類與百分比，環狀圖中央顯示結餘金額。資料尚未足夠繪圖時彈出警示視窗。
+
+UIKit + Swift 練習作。圓餅／環狀圖以 `UIBezierPath` 自繪，無第三方圖表套件。
 
 ## 畫面
 
