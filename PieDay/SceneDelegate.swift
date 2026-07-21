@@ -18,6 +18,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             UINavigationController(rootViewController: dashboard)
         ]
         tabs.tabBar.tintColor = .systemIndigo
+        // 財務 App 啟動時先回答「這個月狀況如何」，再讓使用者進入交易明細。
+        // 主動載入可避免 UITabBarController 的 lazy loading 讓總覽首次顯示延後。
+        dashboard.loadViewIfNeeded()
+        tabs.selectedIndex = 1
 
         let window = UIWindow(windowScene: windowScene)
         window.rootViewController = tabs
