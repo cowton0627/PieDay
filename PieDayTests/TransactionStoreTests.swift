@@ -2,18 +2,19 @@ import XCTest
 @testable import PieDay
 
 final class TransactionStoreTests: XCTestCase {
+    private let suiteName = "PieDay.TransactionStoreTests"
     private var defaults: UserDefaults!
     private var store: TransactionStore!
 
     override func setUp() {
         super.setUp()
-        defaults = UserDefaults(suiteName: #file)
-        defaults.removePersistentDomain(forName: #file)
+        defaults = UserDefaults(suiteName: suiteName)
+        defaults.removePersistentDomain(forName: suiteName)
         store = TransactionStore(defaults: defaults, calendar: Calendar(identifier: .gregorian))
     }
 
     override func tearDown() {
-        defaults.removePersistentDomain(forName: #file)
+        defaults.removePersistentDomain(forName: suiteName)
         defaults = nil
         store = nil
         super.tearDown()
@@ -47,6 +48,32 @@ final class TransactionStoreTests: XCTestCase {
         store.setBudget(1_000, for: .food)
         store.add(Transaction(amount: 1_250, category: .food))
         XCTAssertEqual(store.budgetProgress(for: .food), 1.25, accuracy: 0.001)
+    }
+
+    func testMonthlySummariesAreChronologicalAndIncludeEmptyMonths() {
+        let calendar = Calendar(identifier: .gregorian)
+        let end = calendar.date(from: DateComponents(year: 2026, month: 7, day: 1))!
+        let may = calendar.date(from: DateComponents(year: 2026, month: 5, day: 10))!
+        store.add(Transaction(amount: 2_000, category: .salary, date: may))
+        store.add(Transaction(amount: 700, category: .food, date: end))
+
+        let summaries = store.monthlySummaries(endingAt: end, count: 3)
+
+        XCTAssertEqual(summaries.map { calendar.component(.month, from: $0.month) }, [5, 6, 7])
+        XCTAssertEqual(summaries.map(\.income), [2_000, 0, 0])
+        XCTAssertEqual(summaries.map(\.expense), [0, 0, 700])
+    }
+
+    func testBreakdownAndBudgetProgressUseSelectedMonth() {
+        let calendar = Calendar(identifier: .gregorian)
+        let current = calendar.date(from: DateComponents(year: 2026, month: 7, day: 1))!
+        let previous = calendar.date(from: DateComponents(year: 2026, month: 6, day: 1))!
+        store.setBudget(1_000, for: .food)
+        store.add(Transaction(amount: 800, category: .food, date: previous))
+        store.add(Transaction(amount: 200, category: .food, date: current))
+
+        XCTAssertEqual(store.budgetProgress(for: .food, in: previous), 0.8, accuracy: 0.001)
+        XCTAssertEqual(store.spendingBreakdown(in: previous).first?.amount, 800)
     }
 
     func testPersistsTransactionsAndBudgets() {
