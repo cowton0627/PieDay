@@ -8,12 +8,18 @@
          <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="NO">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="B10000000000000000000008" BuildableName="PieDayTests.xctest" BlueprintName="PieDayTests" ReferencedContainer="container:PieDay.xcodeproj"/>
          </BuildActionEntry>
+         <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C20000000000000000000008" BuildableName="PieDayUITests.xctest" BlueprintName="PieDayUITests" ReferencedContainer="container:PieDay.xcodeproj"/>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
       <Testables>
          <TestableReference skipped="NO">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="B10000000000000000000008" BuildableName="PieDayTests.xctest" BlueprintName="PieDayTests" ReferencedContainer="container:PieDay.xcodeproj"/>
+         </TestableReference>
+         <TestableReference skipped="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C20000000000000000000008" BuildableName="PieDayUITests.xctest" BlueprintName="PieDayUITests" ReferencedContainer="container:PieDay.xcodeproj"/>
          </TestableReference>
       </Testables>
    </TestAction>

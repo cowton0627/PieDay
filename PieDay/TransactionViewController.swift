@@ -24,14 +24,18 @@ final class TransactionViewController: UIViewController {
         view.backgroundColor = .systemGroupedBackground
         navigationItem.largeTitleDisplayMode = .always
         navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)),
-            UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), menu: dataMenu)
-        ]
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped))
+        addButton.accessibilityLabel = "新增交易"
+        addButton.accessibilityIdentifier = "addTransaction"
+        let dataButton = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), menu: dataMenu)
+        dataButton.accessibilityLabel = "資料選單"
+        dataButton.accessibilityIdentifier = "dataMenu"
+        navigationItem.rightBarButtonItems = [addButton, dataButton]
 
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "搜尋分類、備註或金額"
+        searchController.searchBar.accessibilityIdentifier = "transactionSearch"
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
 
@@ -71,12 +75,18 @@ final class TransactionViewController: UIViewController {
         let header = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 112))
         monthLabel.text = Date.now.formatted(.dateTime.year().month(.wide))
         monthLabel.font = .preferredFont(forTextStyle: .subheadline)
+        monthLabel.adjustsFontForContentSizeCategory = true
         monthLabel.textColor = .secondaryLabel
-        balanceLabel.font = .monospacedDigitSystemFont(ofSize: 30, weight: .bold)
-        balanceLabel.adjustsFontSizeToFitWidth = true
+        balanceLabel.font = UIFontMetrics(forTextStyle: .largeTitle).scaledFont(
+            for: .monospacedDigitSystemFont(ofSize: 30, weight: .bold)
+        )
+        balanceLabel.adjustsFontForContentSizeCategory = true
+        balanceLabel.numberOfLines = 0
+        balanceLabel.accessibilityIdentifier = "totalBalance"
         let caption = UILabel()
         caption.text = "目前總資產"
         caption.font = .preferredFont(forTextStyle: .subheadline)
+        caption.adjustsFontForContentSizeCategory = true
         caption.textColor = .secondaryLabel
         let stack = UIStackView(arrangedSubviews: [monthLabel, caption, balanceLabel])
         stack.axis = .vertical
@@ -96,6 +106,8 @@ final class TransactionViewController: UIViewController {
     private func refresh() {
         balanceLabel.text = Money.string(store.balance)
         balanceLabel.textColor = store.balance >= 0 ? .label : .systemRed
+        balanceLabel.accessibilityLabel = "目前總資產"
+        balanceLabel.accessibilityValue = balanceLabel.text
         tableView.reloadData()
         tableView.backgroundView = visibleTransactions.isEmpty ? emptyStateView() : nil
     }
@@ -106,6 +118,8 @@ final class TransactionViewController: UIViewController {
         label.textAlignment = .center
         label.textColor = .secondaryLabel
         label.font = .preferredFont(forTextStyle: .body)
+        label.adjustsFontForContentSizeCategory = true
+        label.accessibilityIdentifier = query.isEmpty ? "emptyTransactions" : "emptySearchResults"
         label.text = query.isEmpty
             ? "本月還沒有交易\n\n點右上角 ＋，幾秒內完成第一筆記帳。"
             : "找不到相符交易\n\n試試其他分類或備註。"
@@ -194,9 +208,23 @@ extension TransactionViewController: UITableViewDataSource, UITableViewDelegate 
         cell.contentConfiguration = content
         let amount = UILabel()
         amount.text = (transaction.type == .income ? "+" : "−") + Money.string(transaction.amount)
-        amount.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        amount.font = UIFontMetrics(forTextStyle: .body).scaledFont(
+            for: .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        )
+        amount.adjustsFontForContentSizeCategory = true
+        amount.adjustsFontSizeToFitWidth = true
         amount.textColor = transaction.type == .income ? .systemGreen : .label
         cell.accessoryView = amount
+        cell.isAccessibilityElement = true
+        cell.accessibilityIdentifier = "transactionRow"
+        cell.accessibilityLabel = [
+            transaction.note ?? transaction.category.displayName,
+            transaction.category.displayName,
+            transaction.date.formatted(date: .long, time: .omitted),
+            transaction.type == .income ? "收入" : "支出",
+            Money.string(transaction.amount)
+        ].joined(separator: "，")
+        cell.accessibilityHint = "點兩下可編輯交易"
         return cell
     }
 

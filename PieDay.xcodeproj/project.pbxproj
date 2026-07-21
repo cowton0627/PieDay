@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B10000000000000000000003 /* TransactionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* TransactionStoreTests.swift */; };
+		C20000000000000000000003 /* PieDayUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000000000000000000001 /* PieDayUITests.swift */; };
 		2980808326B43071006082CA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808226B43071006082CA /* AppDelegate.swift */; };
 		2980808526B43071006082CA /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808426B43071006082CA /* SceneDelegate.swift */; };
 		2980808726B43071006082CA /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808626B43071006082CA /* ViewController.swift */; };
@@ -25,11 +26,14 @@
 
 /* Begin PBXContainerItemProxy section */
 		B1000000000000000000000D /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 2980807726B43071006082CA /* Project object */; proxyType = 1; remoteGlobalIDString = 2980807E26B43071006082CA; remoteInfo = PieDay; };
+		C2000000000000000000000D /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 2980807726B43071006082CA /* Project object */; proxyType = 1; remoteGlobalIDString = 2980807E26B43071006082CA; remoteInfo = PieDay; };
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		B10000000000000000000001 /* TransactionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionStoreTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000002 /* PieDayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PieDayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C20000000000000000000001 /* PieDayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PieDayUITests.swift; sourceTree = "<group>"; };
+		C20000000000000000000002 /* PieDayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PieDayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2980807F26B43071006082CA /* PieDay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PieDay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2980808226B43071006082CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2980808426B43071006082CA /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -49,6 +53,7 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		B10000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		C20000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		2980807C26B43071006082CA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -64,6 +69,7 @@
 			children = (
 				2980808126B43071006082CA /* PieDay */,
 				B10000000000000000000004 /* PieDayTests */,
+				C20000000000000000000004 /* PieDayUITests */,
 				2980808026B43071006082CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +79,7 @@
 			children = (
 				2980807F26B43071006082CA /* PieDay.app */,
 				B10000000000000000000002 /* PieDayTests.xctest */,
+				C20000000000000000000002 /* PieDayUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -99,6 +106,7 @@
 			sourceTree = "<group>";
 		};
 		B10000000000000000000004 /* PieDayTests */ = {isa = PBXGroup; children = (B10000000000000000000001 /* TransactionStoreTests.swift */,); path = PieDayTests; sourceTree = "<group>"; };
+		C20000000000000000000004 /* PieDayUITests */ = {isa = PBXGroup; children = (C20000000000000000000001 /* PieDayUITests.swift */,); path = PieDayUITests; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -112,6 +120,17 @@
 			productName = PieDayTests;
 			productReference = B10000000000000000000002 /* PieDayTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C20000000000000000000008 /* PieDayUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2000000000000000000000B /* Build configuration list for PBXNativeTarget "PieDayUITests" */;
+			buildPhases = (C20000000000000000000005 /* Sources */, C20000000000000000000006 /* Frameworks */, C20000000000000000000007 /* Resources */,);
+			buildRules = ();
+			dependencies = (C2000000000000000000000C /* PBXTargetDependency */,);
+			name = PieDayUITests;
+			productName = PieDayUITests;
+			productReference = C20000000000000000000002 /* PieDayUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		2980807E26B43071006082CA /* PieDay */ = {
 			isa = PBXNativeTarget;
@@ -143,6 +162,7 @@
 						CreatedOnToolsVersion = 12.5;
 					};
 					B10000000000000000000008 = { CreatedOnToolsVersion = 16.0; TestTargetID = 2980807E26B43071006082CA; };
+					C20000000000000000000008 = { CreatedOnToolsVersion = 16.0; TestTargetID = 2980807E26B43071006082CA; };
 				};
 			};
 			buildConfigurationList = 2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */;
@@ -160,12 +180,14 @@
 			targets = (
 				2980807E26B43071006082CA /* PieDay */,
 				B10000000000000000000008 /* PieDayTests */,
+				C20000000000000000000008 /* PieDayUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B10000000000000000000007 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		C20000000000000000000007 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		2980807D26B43071006082CA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -179,6 +201,7 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		B10000000000000000000005 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000003 /* TransactionStoreTests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		C20000000000000000000005 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C20000000000000000000003 /* PieDayUITests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
 		2980807B26B43071006082CA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -201,6 +224,7 @@
 
 /* Begin PBXTargetDependency section */
 		B1000000000000000000000C /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = 2980807E26B43071006082CA /* PieDay */; targetProxy = B1000000000000000000000D /* PBXContainerItemProxy */; };
+		C2000000000000000000000C /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = 2980807E26B43071006082CA /* PieDay */; targetProxy = C2000000000000000000000D /* PBXContainerItemProxy */; };
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -217,6 +241,8 @@
 /* Begin XCBuildConfiguration section */
 		B10000000000000000000009 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PieDay.app/PieDay"; }; name = Debug; };
 		B1000000000000000000000A /* Release */ = {isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PieDay.app/PieDay"; }; name = Release; };
+		C20000000000000000000009 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayUITests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = PieDay; }; name = Debug; };
+		C2000000000000000000000A /* Release */ = {isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayUITests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = PieDay; }; name = Release; };
 		2980809126B43076006082CA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -375,6 +401,7 @@
 
 /* Begin XCConfigurationList section */
 		B1000000000000000000000B /* Build configuration list for PBXNativeTarget "PieDayTests" */ = {isa = XCConfigurationList; buildConfigurations = (B10000000000000000000009 /* Debug */, B1000000000000000000000A /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		C2000000000000000000000B /* Build configuration list for PBXNativeTarget "PieDayUITests" */ = {isa = XCConfigurationList; buildConfigurations = (C20000000000000000000009 /* Debug */, C2000000000000000000000A /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
