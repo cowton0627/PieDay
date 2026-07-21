@@ -32,6 +32,7 @@ final class DonutChartView: UIView {
 
     private func commonInit() {
         backgroundColor = .clear
+        isAccessibilityElement = true
         layer.addSublayer(chartLayer)
         addSubview(centerLabel)
         NSLayoutConstraint.activate([
@@ -45,7 +46,11 @@ final class DonutChartView: UIView {
         super.layoutSubviews()
         chartLayer.frame = bounds
         let fontSize = max(10, min(bounds.width, bounds.height) * 0.11)
-        centerLabel.font = .systemFont(ofSize: fontSize, weight: .medium)
+        centerLabel.font = UIFontMetrics(forTextStyle: .headline).scaledFont(
+            for: .systemFont(ofSize: fontSize, weight: .medium),
+            maximumPointSize: 42
+        )
+        centerLabel.adjustsFontForContentSizeCategory = true
         rebuildLayers()
     }
 

@@ -16,6 +16,7 @@ final class ViewController: UIViewController {
     private let donutChart = DonutChartView()
     private let trendChart = MonthlyTrendView()
     private let insightLabel = UILabel()
+    private let metricsStack = UIStackView()
     private var selectedMonth = Date()
 
     override func viewDidLoad() {
@@ -25,6 +26,7 @@ final class ViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .always
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "設定預算", style: .plain,
                                                             target: self, action: #selector(editBudgets))
+        navigationItem.rightBarButtonItem?.accessibilityIdentifier = "editBudgets"
         view.backgroundColor = .systemGroupedBackground
         buildLayout()
         NotificationCenter.default.addObserver(self, selector: #selector(refresh),
@@ -54,15 +56,18 @@ final class ViewController: UIViewController {
         ])
 
         monthTitle.font = .preferredFont(forTextStyle: .headline)
+        monthTitle.adjustsFontForContentSizeCategory = true
         monthTitle.textColor = .label
         monthTitle.textAlignment = .center
         monthTitle.setContentCompressionResistancePriority(.required, for: .horizontal)
         let previous = UIButton(type: .system)
         previous.setImage(UIImage(systemName: "chevron.left"), for: .normal)
         previous.accessibilityLabel = "上一個月"
+        previous.accessibilityIdentifier = "previousMonth"
         previous.addTarget(self, action: #selector(showPreviousMonth), for: .touchUpInside)
         nextMonthButton.setImage(UIImage(systemName: "chevron.right"), for: .normal)
         nextMonthButton.accessibilityLabel = "下一個月"
+        nextMonthButton.accessibilityIdentifier = "nextMonth"
         nextMonthButton.addTarget(self, action: #selector(showNextMonth), for: .touchUpInside)
         let monthSelector = UIStackView(arrangedSubviews: [previous, UIView(), monthTitle, UIView(), nextMonthButton])
         monthSelector.axis = .horizontal
@@ -71,25 +76,25 @@ final class ViewController: UIViewController {
 
         let currentMonthButton = UIButton(type: .system)
         currentMonthButton.setTitle("回到本月", for: .normal)
+        currentMonthButton.accessibilityIdentifier = "currentMonth"
         currentMonthButton.titleLabel?.font = .preferredFont(forTextStyle: .footnote)
         currentMonthButton.addTarget(self, action: #selector(showCurrentMonth), for: .touchUpInside)
         contentStack.addArrangedSubview(currentMonthButton)
 
-        let metrics = UIStackView(arrangedSubviews: [
-            metricCard(title: "收入", value: incomeValue, color: .systemGreen),
-            metricCard(title: "支出", value: expenseValue, color: .systemOrange),
-            metricCard(title: "可用", value: availableValue, color: .systemIndigo)
-        ])
-        metrics.axis = .horizontal
-        metrics.spacing = 10
-        metrics.distribution = .fillEqually
-        contentStack.addArrangedSubview(metrics)
+        [metricCard(title: "收入", value: incomeValue, color: .systemGreen),
+         metricCard(title: "支出", value: expenseValue, color: .systemOrange),
+         metricCard(title: "可用", value: availableValue, color: .systemIndigo)]
+            .forEach(metricsStack.addArrangedSubview)
+        metricsStack.spacing = 10
+        contentStack.addArrangedSubview(metricsStack)
+        updateLayoutForContentSizeCategory()
 
         let budgetCard = card()
         let budgetTitle = sectionTitle("本月預算")
         budgetProgress.layer.cornerRadius = 4
         budgetProgress.clipsToBounds = true
         budgetCaption.font = .preferredFont(forTextStyle: .subheadline)
+        budgetCaption.adjustsFontForContentSizeCategory = true
         budgetCaption.textColor = .secondaryLabel
         budgetCaption.numberOfLines = 0
         budgetRows.axis = .vertical
@@ -121,6 +126,7 @@ final class ViewController: UIViewController {
 
         let insightCard = card()
         insightLabel.font = .preferredFont(forTextStyle: .body)
+        insightLabel.adjustsFontForContentSizeCategory = true
         insightLabel.numberOfLines = 0
         insightLabel.textColor = .label
         let insightStack = UIStackView(arrangedSubviews: [sectionTitle("本月洞察"), insightLabel])
@@ -135,14 +141,22 @@ final class ViewController: UIViewController {
         let label = UILabel()
         label.text = title
         label.font = .preferredFont(forTextStyle: .caption1)
+        label.adjustsFontForContentSizeCategory = true
         label.textColor = .secondaryLabel
-        value.font = .monospacedDigitSystemFont(ofSize: 16, weight: .bold)
+        value.font = UIFontMetrics(forTextStyle: .headline).scaledFont(
+            for: .monospacedDigitSystemFont(ofSize: 16, weight: .bold)
+        )
+        value.adjustsFontForContentSizeCategory = true
+        value.numberOfLines = 0
         value.textColor = color
         value.adjustsFontSizeToFitWidth = true
         let stack = UIStackView(arrangedSubviews: [label, value])
         stack.axis = .vertical
         stack.spacing = 6
         embed(stack, in: card, inset: 12)
+        card.isAccessibilityElement = true
+        card.accessibilityLabel = title
+        card.accessibilityIdentifier = "metric\(title)"
         return card
     }
 
@@ -157,6 +171,8 @@ final class ViewController: UIViewController {
         let label = UILabel()
         label.text = text
         label.font = .preferredFont(forTextStyle: .headline)
+        label.adjustsFontForContentSizeCategory = true
+        label.accessibilityTraits.insert(.header)
         return label
     }
 
@@ -181,6 +197,7 @@ final class ViewController: UIViewController {
         expenseValue.text = Money.string(expense)
         availableValue.text = Money.string(balance)
         availableValue.textColor = balance >= 0 ? .systemIndigo : .systemRed
+        updateMetricAccessibilityValues()
 
         let budget = store.totalBudget
         let progress = budget > 0 ? NSDecimalNumber(decimal: expense / budget).doubleValue : 0
@@ -189,6 +206,9 @@ final class ViewController: UIViewController {
         budgetCaption.text = budget > 0
             ? "已使用 \(Money.string(expense))／\(Money.string(budget)) · \(Int(progress * 100))%"
             : "尚未設定預算。設定分類上限後，這裡會主動提示風險。"
+        budgetProgress.isAccessibilityElement = true
+        budgetProgress.accessibilityLabel = "整體預算使用進度"
+        budgetProgress.accessibilityValue = budgetCaption.text
 
         budgetRows.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for category in TransactionCategory.expenseCases where store.budget(for: category) > 0 {
@@ -201,6 +221,7 @@ final class ViewController: UIViewController {
                        color: $0.category.color, label: $0.category.displayName)
         }
         donutChart.centerLabel.text = expense > 0 ? "當月支出\n\(Money.string(expense))" : "尚無\n支出"
+        donutChart.accessibilityLabel = chartAccessibilityLabel(breakdown: breakdown, expense: expense)
         trendChart.summaries = store.monthlySummaries(endingAt: selectedMonth)
         insightLabel.text = makeInsight(income: income, expense: expense, balance: balance,
                                         breakdown: breakdown, progress: progress)
@@ -213,9 +234,14 @@ final class ViewController: UIViewController {
         let title = UILabel()
         title.text = category.displayName
         title.font = .preferredFont(forTextStyle: .subheadline)
+        title.adjustsFontForContentSizeCategory = true
         let amount = UILabel()
         amount.text = "\(Money.string(spent)) / \(Money.string(budget))"
-        amount.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        amount.font = UIFontMetrics(forTextStyle: .subheadline).scaledFont(
+            for: .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        )
+        amount.adjustsFontForContentSizeCategory = true
+        amount.numberOfLines = 0
         amount.textColor = progress > 1 ? .systemRed : .secondaryLabel
         let labels = UIStackView(arrangedSubviews: [title, UIView(), amount])
         labels.axis = .horizontal
@@ -225,7 +251,36 @@ final class ViewController: UIViewController {
         let stack = UIStackView(arrangedSubviews: [labels, bar])
         stack.axis = .vertical
         stack.spacing = 6
+        stack.isAccessibilityElement = true
+        stack.accessibilityLabel = "\(category.displayName)預算"
+        stack.accessibilityValue = "已使用\(Money.string(spent))，預算\(Money.string(budget))，百分之\(Int(progress * 100))"
         return stack
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard previousTraitCollection?.preferredContentSizeCategory != traitCollection.preferredContentSizeCategory else { return }
+        updateLayoutForContentSizeCategory()
+    }
+
+    private func updateLayoutForContentSizeCategory() {
+        let accessibilitySize = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        metricsStack.axis = accessibilitySize ? .vertical : .horizontal
+        metricsStack.distribution = accessibilitySize ? .fill : .fillEqually
+    }
+
+    private func updateMetricAccessibilityValues() {
+        zip(metricsStack.arrangedSubviews, [incomeValue, expenseValue, availableValue]).forEach { card, label in
+            card.accessibilityValue = label.text
+        }
+    }
+
+    private func chartAccessibilityLabel(
+        breakdown: [(category: TransactionCategory, amount: Decimal)], expense: Decimal
+    ) -> String {
+        guard expense > 0 else { return "支出去向，尚無支出" }
+        let details = breakdown.map { "\($0.category.displayName)\(Money.string($0.amount))" }.joined(separator: "，")
+        return "支出去向，當月支出\(Money.string(expense))，\(details)"
     }
 
     private func makeInsight(income: Decimal, expense: Decimal, balance: Decimal,
@@ -302,6 +357,7 @@ private final class MonthlyTrendView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         isOpaque = false
+        isAccessibilityElement = true
         accessibilityLabel = "近六個月收入與支出趨勢"
     }
 
@@ -359,5 +415,14 @@ private final class MonthlyTrendView: UIView {
         attributed.addAttribute(.foregroundColor, value: UIColor.systemGreen, range: NSRange(location: 0, length: 1))
         attributed.addAttribute(.foregroundColor, value: UIColor.systemOrange, range: NSRange(location: 8, length: 1))
         attributed.draw(at: CGPoint(x: rect.midX - attributed.size().width / 2, y: 0))
+    }
+
+    override var accessibilityValue: String? {
+        get {
+            summaries.map {
+                "\($0.month.formatted(.dateTime.year().month(.wide)))，收入\(Money.string($0.income))，支出\(Money.string($0.expense))"
+            }.joined(separator: "；")
+        }
+        set { }
     }
 }
