@@ -1,335 +1,242 @@
 import UIKit
 
-/// 預算 Dashboard：呈現 TransactionStore 各分類加總與比例圖。
-/// Storyboard 上 customClass 仍是 "ViewController"，這個 scene 的 view 已清空成空白 root，整個 UI 由本檔 code 建構。
 final class ViewController: UIViewController {
-
-    // MARK: - Section: Summary（按分類顯示金額與佔比）
-    private struct SummaryRow {
-        let category: TransactionCategory
-        let nameLabel = UILabel()
-        let amountLabel = UILabel()
-        let percentLabel = UILabel()
-        let colorDot = UIView()
-    }
-
-    private var summaryRows: [TransactionCategory: SummaryRow] = [:]
-
-    // MARK: - Subviews
-    private let titleLabel: UILabel = {
-        let l = UILabel()
-        l.text = "月開支"
-        l.font = .systemFont(ofSize: 28, weight: .bold)
-        l.textAlignment = .center
-        return l
-    }()
-
-    private let summaryCard: UIView = {
-        let v = UIView()
-        v.backgroundColor = .secondarySystemGroupedBackground
-        v.layer.cornerRadius = 16
-        return v
-    }()
-
-    private let summaryStack: UIStackView = {
-        let s = UIStackView()
-        s.axis = .vertical
-        s.spacing = 12
-        s.alignment = .fill
-        s.distribution = .equalSpacing
-        s.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        s.isLayoutMarginsRelativeArrangement = true
-        return s
-    }()
-
-    private let chartHeaderLabel: UILabel = {
-        let l = UILabel()
-        l.text = "支出比例"
-        l.font = .systemFont(ofSize: 15, weight: .semibold)
-        l.textColor = .secondaryLabel
-        l.textAlignment = .center
-        return l
-    }()
-
-    private let chartContainer: UIView = {
-        let v = UIView()
-        v.backgroundColor = .secondarySystemGroupedBackground
-        v.layer.cornerRadius = 16
-        v.clipsToBounds = true
-        return v
-    }()
-
-    private let pieChartView = PieChartView()
-    private let donutChartView = DonutChartView()
-
-    private let pieButton: UIButton = {
-        let b = UIButton(type: .system)
-        b.setTitle("圓餅圖", for: .normal)
-        b.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        b.backgroundColor = .systemBlue
-        b.tintColor = .white
-        b.setTitleColor(.white, for: .normal)
-        b.layer.cornerRadius = 12
-        return b
-    }()
-
-    private let donutButton: UIButton = {
-        let b = UIButton(type: .system)
-        b.setTitle("環狀圖", for: .normal)
-        b.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        b.backgroundColor = .secondarySystemFill
-        b.tintColor = .label
-        b.setTitleColor(.label, for: .normal)
-        b.layer.cornerRadius = 12
-        return b
-    }()
-
-    private let buttonRow: UIStackView = {
-        let s = UIStackView()
-        s.axis = .horizontal
-        s.spacing = 12
-        s.distribution = .fillEqually
-        return s
-    }()
-
-    private let rootStack: UIStackView = {
-        let s = UIStackView()
-        s.axis = .vertical
-        s.spacing = 16
-        s.alignment = .fill
-        return s
-    }()
-
-    // MARK: - Private
     private let store = TransactionStore.shared
-    private enum ChartMode { case none, pie, donut }
-    private var currentMode: ChartMode = .none
+    private let scrollView = UIScrollView()
+    private let contentStack = UIStackView()
+    private let incomeValue = UILabel()
+    private let expenseValue = UILabel()
+    private let availableValue = UILabel()
+    private let budgetProgress = UIProgressView(progressViewStyle: .bar)
+    private let budgetCaption = UILabel()
+    private let budgetRows = UIStackView()
+    private let donutChart = DonutChartView()
+    private let insightLabel = UILabel()
 
-    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "財務總覽"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "設定預算", style: .plain,
+                                                            target: self, action: #selector(editBudgets))
         view.backgroundColor = .systemGroupedBackground
         buildLayout()
-        wireActions()
-        observeStoreChanges()
+        NotificationCenter.default.addObserver(self, selector: #selector(refresh),
+                                               name: TransactionStore.didChangeNotification, object: nil)
+        refresh()
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        refreshFromStore()
-    }
+    deinit { NotificationCenter.default.removeObserver(self) }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    // MARK: - Layout
     private func buildLayout() {
-        buildSummaryRows()
-
-        view.addSubview(rootStack)
-        rootStack.translatesAutoresizingMaskIntoConstraints = false
-
-        summaryCard.addSubview(summaryStack)
-        summaryStack.translatesAutoresizingMaskIntoConstraints = false
-
-        chartContainer.addSubview(pieChartView)
-        chartContainer.addSubview(donutChartView)
-        pieChartView.translatesAutoresizingMaskIntoConstraints = false
-        donutChartView.translatesAutoresizingMaskIntoConstraints = false
-        pieChartView.isHidden = true
-        donutChartView.isHidden = true
-
-        buttonRow.addArrangedSubview(pieButton)
-        buttonRow.addArrangedSubview(donutButton)
-
-        rootStack.addArrangedSubview(titleLabel)
-        rootStack.addArrangedSubview(summaryCard)
-        rootStack.addArrangedSubview(chartHeaderLabel)
-        rootStack.addArrangedSubview(chartContainer)
-        rootStack.addArrangedSubview(buttonRow)
-
-        // Root stack 填滿 safeArea + padding
+        scrollView.alwaysBounceVertical = true
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentStack)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.axis = .vertical
+        contentStack.spacing = 16
         NSLayoutConstraint.activate([
-            rootStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-            rootStack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            rootStack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
-
-            summaryStack.topAnchor.constraint(equalTo: summaryCard.topAnchor),
-            summaryStack.leadingAnchor.constraint(equalTo: summaryCard.leadingAnchor),
-            summaryStack.trailingAnchor.constraint(equalTo: summaryCard.trailingAnchor),
-            summaryStack.bottomAnchor.constraint(equalTo: summaryCard.bottomAnchor),
-
-            // 按鈕高度
-            pieButton.heightAnchor.constraint(equalToConstant: 48),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
+            contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -16),
+            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24)
         ])
 
-        // Chart 在 container 內居中 + 保持 1:1 + 最多占 container 85%（Pie 圓本身只佔 view 62%，外圍留給 leader line + label）
-        let chartFitRatio: CGFloat = 0.85
-        for chart in [pieChartView, donutChartView] as [UIView] {
-            NSLayoutConstraint.activate([
-                chart.centerXAnchor.constraint(equalTo: chartContainer.centerXAnchor),
-                chart.centerYAnchor.constraint(equalTo: chartContainer.centerYAnchor),
-                chart.widthAnchor.constraint(equalTo: chart.heightAnchor),
-                chart.widthAnchor.constraint(lessThanOrEqualTo: chartContainer.widthAnchor, multiplier: chartFitRatio),
-                chart.heightAnchor.constraint(lessThanOrEqualTo: chartContainer.heightAnchor, multiplier: chartFitRatio),
-            ])
-            let widthFill = chart.widthAnchor.constraint(equalTo: chartContainer.widthAnchor, multiplier: chartFitRatio)
-            let heightFill = chart.heightAnchor.constraint(equalTo: chartContainer.heightAnchor, multiplier: chartFitRatio)
-            widthFill.priority = .defaultHigh
-            heightFill.priority = .defaultHigh
-            widthFill.isActive = true
-            heightFill.isActive = true
-        }
+        let month = UILabel()
+        month.text = Date.now.formatted(.dateTime.year().month(.wide)) + "現金流"
+        month.font = .preferredFont(forTextStyle: .headline)
+        month.textColor = .secondaryLabel
+        contentStack.addArrangedSubview(month)
 
-        // 讓 chart container 吃掉所有剩餘垂直空間
-        chartContainer.setContentHuggingPriority(.defaultLow, for: .vertical)
-        chartContainer.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        titleLabel.setContentHuggingPriority(.required, for: .vertical)
-        summaryCard.setContentHuggingPriority(.required, for: .vertical)
-        chartHeaderLabel.setContentHuggingPriority(.required, for: .vertical)
-        buttonRow.setContentHuggingPriority(.required, for: .vertical)
+        let metrics = UIStackView(arrangedSubviews: [
+            metricCard(title: "收入", value: incomeValue, color: .systemGreen),
+            metricCard(title: "支出", value: expenseValue, color: .systemOrange),
+            metricCard(title: "可用", value: availableValue, color: .systemIndigo)
+        ])
+        metrics.axis = .horizontal
+        metrics.spacing = 10
+        metrics.distribution = .fillEqually
+        contentStack.addArrangedSubview(metrics)
+
+        let budgetCard = card()
+        let budgetTitle = sectionTitle("本月預算")
+        budgetProgress.layer.cornerRadius = 4
+        budgetProgress.clipsToBounds = true
+        budgetCaption.font = .preferredFont(forTextStyle: .subheadline)
+        budgetCaption.textColor = .secondaryLabel
+        budgetCaption.numberOfLines = 0
+        budgetRows.axis = .vertical
+        budgetRows.spacing = 14
+        let budgetStack = UIStackView(arrangedSubviews: [budgetTitle, budgetProgress, budgetCaption, budgetRows])
+        budgetStack.axis = .vertical
+        budgetStack.spacing = 12
+        embed(budgetStack, in: budgetCard)
+        contentStack.addArrangedSubview(budgetCard)
+
+        let chartCard = card()
+        let chartTitle = sectionTitle("支出去向")
+        donutChart.translatesAutoresizingMaskIntoConstraints = false
+        donutChart.heightAnchor.constraint(equalToConstant: 240).isActive = true
+        let chartStack = UIStackView(arrangedSubviews: [chartTitle, donutChart])
+        chartStack.axis = .vertical
+        chartStack.spacing = 8
+        embed(chartStack, in: chartCard)
+        contentStack.addArrangedSubview(chartCard)
+
+        let insightCard = card()
+        insightLabel.font = .preferredFont(forTextStyle: .body)
+        insightLabel.numberOfLines = 0
+        insightLabel.textColor = .label
+        let insightStack = UIStackView(arrangedSubviews: [sectionTitle("本月洞察"), insightLabel])
+        insightStack.axis = .vertical
+        insightStack.spacing = 10
+        embed(insightStack, in: insightCard)
+        contentStack.addArrangedSubview(insightCard)
     }
 
-    private func buildSummaryRows() {
-        for category in TransactionCategory.allCases {
-            let row = SummaryRow(category: category)
-
-            row.colorDot.backgroundColor = category.color
-            row.colorDot.layer.cornerRadius = 6
-            row.colorDot.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                row.colorDot.widthAnchor.constraint(equalToConstant: 12),
-                row.colorDot.heightAnchor.constraint(equalToConstant: 12),
-            ])
-
-            row.nameLabel.text = category.displayName
-            row.nameLabel.font = .systemFont(ofSize: 17, weight: .medium)
-
-            row.amountLabel.text = "0"
-            row.amountLabel.font = .monospacedDigitSystemFont(ofSize: 17, weight: .semibold)
-            row.amountLabel.textAlignment = .right
-            row.amountLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-            row.percentLabel.text = "0.0%"
-            row.percentLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .regular)
-            row.percentLabel.textColor = .secondaryLabel
-            row.percentLabel.textAlignment = .right
-            row.percentLabel.setContentHuggingPriority(.required, for: .horizontal)
-            row.percentLabel.widthAnchor.constraint(equalToConstant: 60).isActive = true
-
-            // 收入分類（薪水）不顯示百分比
-            row.percentLabel.isHidden = category.isIncome
-
-            let rowStack = UIStackView(arrangedSubviews: [
-                row.colorDot, row.nameLabel, row.amountLabel, row.percentLabel
-            ])
-            rowStack.axis = .horizontal
-            rowStack.spacing = 10
-            rowStack.alignment = .center
-
-            summaryStack.addArrangedSubview(rowStack)
-            summaryRows[category] = row
-        }
+    private func metricCard(title: String, value: UILabel, color: UIColor) -> UIView {
+        let card = self.card()
+        let label = UILabel()
+        label.text = title
+        label.font = .preferredFont(forTextStyle: .caption1)
+        label.textColor = .secondaryLabel
+        value.font = .monospacedDigitSystemFont(ofSize: 16, weight: .bold)
+        value.textColor = color
+        value.adjustsFontSizeToFitWidth = true
+        let stack = UIStackView(arrangedSubviews: [label, value])
+        stack.axis = .vertical
+        stack.spacing = 6
+        embed(stack, in: card, inset: 12)
+        return card
     }
 
-    private func wireActions() {
-        pieButton.addTarget(self, action: #selector(pieTapped), for: .touchUpInside)
-        donutButton.addTarget(self, action: #selector(donutTapped), for: .touchUpInside)
+    private func card() -> UIView {
+        let view = UIView()
+        view.backgroundColor = .secondarySystemGroupedBackground
+        view.layer.cornerRadius = 18
+        return view
     }
 
-    private func observeStoreChanges() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(storeDidChange),
-            name: TransactionStore.didChangeNotification,
-            object: nil
-        )
+    private func sectionTitle(_ text: String) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.font = .preferredFont(forTextStyle: .headline)
+        return label
     }
 
-    // MARK: - Display
-    @objc private func storeDidChange() {
-        refreshFromStore()
-        switch currentMode {
-        case .pie:   showChart(mode: .pie, animated: false)
-        case .donut: showChart(mode: .donut, animated: false)
-        case .none:  break
-        }
+    private func embed(_ child: UIView, in parent: UIView, inset: CGFloat = 16) {
+        parent.addSubview(child)
+        child.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            child.topAnchor.constraint(equalTo: parent.topAnchor, constant: inset),
+            child.leadingAnchor.constraint(equalTo: parent.leadingAnchor, constant: inset),
+            child.trailingAnchor.constraint(equalTo: parent.trailingAnchor, constant: -inset),
+            child.bottomAnchor.constraint(equalTo: parent.bottomAnchor, constant: -inset)
+        ])
     }
 
-    private func refreshFromStore() {
-        let salary = store.total(for: .salary)
-        for (category, row) in summaryRows {
-            let amount = store.total(for: category)
-            row.amountLabel.text = String(format: "%.0f", amount)
-            if !category.isIncome {
-                row.percentLabel.text = salary > 0
-                    ? String(format: "%.1f%%", amount / salary * 100)
-                    : "—"
-            }
+    @objc private func refresh() {
+        incomeValue.text = Money.string(store.monthlyIncome)
+        expenseValue.text = Money.string(store.monthlyExpense)
+        availableValue.text = Money.string(store.monthlyBalance)
+        availableValue.textColor = store.monthlyBalance >= 0 ? .systemIndigo : .systemRed
+
+        let budget = store.totalBudget
+        let expense = store.monthlyExpense
+        let progress = budget > 0 ? NSDecimalNumber(decimal: expense / budget).doubleValue : 0
+        budgetProgress.progress = Float(min(progress, 1))
+        budgetProgress.progressTintColor = progress > 1 ? .systemRed : progress >= 0.8 ? .systemOrange : .systemGreen
+        budgetCaption.text = budget > 0
+            ? "已使用 \(Money.string(expense))／\(Money.string(budget)) · \(Int(progress * 100))%"
+            : "尚未設定預算。設定分類上限後，這裡會主動提示風險。"
+
+        budgetRows.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for category in TransactionCategory.expenseCases where store.budget(for: category) > 0 {
+            budgetRows.addArrangedSubview(makeBudgetRow(category))
         }
+
+        let breakdown = store.spendingBreakdown()
+        donutChart.slices = breakdown.map {
+            ChartSlice(value: CGFloat(NSDecimalNumber(decimal: $0.amount).doubleValue),
+                       color: $0.category.color, label: $0.category.displayName)
+        }
+        donutChart.centerLabel.text = expense > 0 ? "本月支出\n\(Money.string(expense))" : "尚無\n支出"
+        insightLabel.text = makeInsight(breakdown: breakdown, progress: progress)
     }
 
-    private func currentSlices() -> [ChartSlice] {
-        store.expenseRatiosAgainstSalary().map { entry in
-            let color = entry.category?.color ?? .systemGray
-            let label = entry.category?.displayName ?? "剩餘"
-            return ChartSlice(value: CGFloat(entry.ratio), color: color, label: label)
-        }
+    private func makeBudgetRow(_ category: TransactionCategory) -> UIView {
+        let spent = store.total(for: category)
+        let budget = store.budget(for: category)
+        let progress = store.budgetProgress(for: category)
+        let title = UILabel()
+        title.text = category.displayName
+        title.font = .preferredFont(forTextStyle: .subheadline)
+        let amount = UILabel()
+        amount.text = "\(Money.string(spent)) / \(Money.string(budget))"
+        amount.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+        amount.textColor = progress > 1 ? .systemRed : .secondaryLabel
+        let labels = UIStackView(arrangedSubviews: [title, UIView(), amount])
+        labels.axis = .horizontal
+        let bar = UIProgressView(progressViewStyle: .bar)
+        bar.progress = Float(min(progress, 1))
+        bar.progressTintColor = progress > 1 ? .systemRed : progress >= 0.8 ? .systemOrange : category.color
+        let stack = UIStackView(arrangedSubviews: [labels, bar])
+        stack.axis = .vertical
+        stack.spacing = 6
+        return stack
     }
 
-    private func showChart(mode: ChartMode, animated: Bool) {
-        let slices = currentSlices()
-        guard !slices.isEmpty else {
-            showEmptyDataAlert()
-            return
+    private func makeInsight(breakdown: [(category: TransactionCategory, amount: Decimal)], progress: Double) -> String {
+        guard store.monthlyIncome > 0 || store.monthlyExpense > 0 else {
+            return "載入展示資料或新增交易後，PieDay 會在這裡摘要你的消費狀況。"
         }
-        currentMode = mode
-
-        pieChartView.slices = slices
-        donutChartView.slices = slices
-        donutChartView.centerLabel.text = donutCenterText()
-
-        let apply: () -> Void = {
-            self.pieChartView.isHidden = (mode != .pie)
-            self.donutChartView.isHidden = (mode != .donut)
-        }
-
-        if animated {
-            UIView.transition(with: chartContainer,
-                              duration: 0.25,
-                              options: [.transitionCrossDissolve],
-                              animations: apply)
+        var messages: [String] = []
+        if store.monthlyBalance < 0 {
+            messages.append("⚠️ 本月已超支 \(Money.string(-store.monthlyBalance))，建議先檢查非必要消費。")
         } else {
-            apply()
+            messages.append("✓ 本月仍有 \(Money.string(store.monthlyBalance)) 可安排。")
         }
+        if let top = breakdown.first {
+            messages.append("最大支出是「\(top.category.displayName)」\(Money.string(top.amount))。")
+        }
+        if progress > 1 { messages.append("整體預算已超過 \(Int((progress - 1) * 100))%。") }
+        else if progress >= 0.8 { messages.append("整體預算已使用八成，接下來的支出需要留意。") }
+        return messages.joined(separator: "\n")
     }
 
-    private func donutCenterText() -> String {
-        let remaining = store.total(for: .salary)
-            - store.total(for: .food)
-            - store.total(for: .loan)
-            - store.total(for: .others)
-        return String(format: "結餘\n%.0f", remaining)
+    @objc private func editBudgets() { chooseBudgetCategory() }
+
+    private func chooseBudgetCategory() {
+        let sheet = UIAlertController(title: "設定分類預算", message: "選擇要調整的分類", preferredStyle: .actionSheet)
+        for category in TransactionCategory.expenseCases {
+            sheet.addAction(UIAlertAction(title: "\(category.displayName) · \(Money.string(store.budget(for: category)))", style: .default) { [weak self] _ in
+                self?.promptBudget(for: category)
+            })
+        }
+        sheet.addAction(UIAlertAction(title: "完成", style: .cancel))
+        sheet.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
+        present(sheet, animated: true)
     }
 
-    private func showEmptyDataAlert() {
-        let alert = UIAlertController(
-            title: "尚無資料",
-            message: "請先到 Transaction 分頁新增「薪水」收入與支出項目，再回來查看比例。",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "好", style: .default))
+    private func promptBudget(for category: TransactionCategory) {
+        let alert = UIAlertController(title: category.displayName + "預算", message: "輸入每月可支配上限", preferredStyle: .alert)
+        alert.addTextField {
+            $0.keyboardType = .decimalPad
+            $0.placeholder = "金額"
+            let current = self.store.budget(for: category)
+            $0.text = current > 0 ? NSDecimalNumber(decimal: current).stringValue : nil
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "儲存", style: .default) { [weak self, weak alert] _ in
+            guard let amount = Money.decimal(from: alert?.textFields?.first?.text), amount >= 0 else { return }
+            self?.store.setBudget(amount, for: category)
+        })
         present(alert, animated: true)
-    }
-
-    // MARK: - Actions
-    @objc private func pieTapped() {
-        showChart(mode: .pie, animated: true)
-    }
-
-    @objc private func donutTapped() {
-        showChart(mode: .donut, animated: true)
     }
 }

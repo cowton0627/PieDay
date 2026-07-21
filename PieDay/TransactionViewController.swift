@@ -1,175 +1,223 @@
 import UIKit
 
 final class TransactionViewController: UIViewController {
-    // MARK: - IBOutlet
-    @IBOutlet weak var balanceLabel: UILabel!
-    @IBOutlet weak var transactionAmountTextField: UITextField!
-    @IBOutlet weak var transactionTypeSegmentedControl: UISegmentedControl!
-    @IBOutlet weak var transactionTableView: UITableView!
-    @IBOutlet weak var addTransactionButton: UIButton!
-
-    // MARK: - Private
     private let store = TransactionStore.shared
-    private let cellIdentifier = "TransactionCell"
-    private let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "MM/dd HH:mm"
-        return f
-    }()
+    private let tableView = UITableView(frame: .zero, style: .insetGrouped)
+    private let searchController = UISearchController(searchResultsController: nil)
+    private let balanceLabel = UILabel()
+    private let monthLabel = UILabel()
+    private var query = ""
 
-    // MARK: - Life Cycle
+    private var visibleTransactions: [Transaction] {
+        let monthly = store.transactions(in: Date()).sorted { $0.date > $1.date }
+        guard !query.isEmpty else { return monthly }
+        return monthly.filter {
+            $0.category.displayName.localizedCaseInsensitiveContains(query) ||
+            ($0.note?.localizedCaseInsensitiveContains(query) ?? false) ||
+            Money.string($0.amount).localizedCaseInsensitiveContains(query)
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "本月交易"
         view.backgroundColor = .systemGroupedBackground
-        transactionTableView.dataSource = self
-        transactionTableView.delegate = self
-        transactionTableView.rowHeight = UITableView.automaticDimension
-        transactionTableView.estimatedRowHeight = 52
-        transactionTableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        transactionAmountTextField.delegate = self
-        styleControls()
-        refreshBalance()
+        navigationItem.largeTitleDisplayMode = .always
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addTapped)),
+            UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), menu: dataMenu)
+        ]
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(storeDidChange),
-            name: TransactionStore.didChangeNotification,
-            object: nil
-        )
-    }
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "搜尋分類、備註或金額"
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
 
-    private func styleControls() {
-        // Segmented control 字體用 HIG 推薦的 14 medium
-        let segFont = UIFont.systemFont(ofSize: 14, weight: .medium)
-        transactionTypeSegmentedControl.setTitleTextAttributes([.font: segFont], for: .normal)
-        transactionTypeSegmentedControl.setTitleTextAttributes([.font: segFont], for: .selected)
-
-        // 「新增」按鈕：全寬精緻按鈕（leading/trailing 對齊 safe area + margin）
-        addTransactionButton.setTitle("新增", for: .normal)
-        addTransactionButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        addTransactionButton.setTitleColor(.white, for: .normal)
-        addTransactionButton.backgroundColor = .systemBlue
-        addTransactionButton.layer.cornerRadius = 12
-        addTransactionButton.translatesAutoresizingMaskIntoConstraints = false
+        configureHeader()
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.keyboardDismissMode = .onDrag
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Transaction")
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            addTransactionButton.heightAnchor.constraint(equalToConstant: 50),
-            addTransactionButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
-            addTransactionButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
 
-        // 餘額數字顏色用 secondary 取代亮色（亮色由 balance 正負決定）
-        balanceLabel.font = .monospacedDigitSystemFont(ofSize: 22, weight: .semibold)
+        NotificationCenter.default.addObserver(self, selector: #selector(storeDidChange),
+                                               name: TransactionStore.didChangeNotification, object: nil)
+        refresh()
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
+    deinit { NotificationCenter.default.removeObserver(self) }
 
-    @objc private func storeDidChange() {
-        refreshBalance()
-        transactionTableView.reloadData()
-    }
-
-    // MARK: - Display
-    private func refreshBalance() {
-        let balance = store.balance
-        balanceLabel.text = String(format: "%.0f", balance)
-        balanceLabel.textColor = balance >= 0 ? .label : .systemRed
-    }
-
-    // MARK: - IBAction
-    @IBAction func addTransactionPressed(_ sender: UIButton) {
-        guard let amount = parseAmount() else {
-            showAlert(title: "金額無效", message: "請輸入大於 0 的金額")
-            return
-        }
-        view.endEditing(true)
-
-        if transactionTypeSegmentedControl.selectedSegmentIndex == 0 {
-            // Expense — 讓使用者挑分類
-            promptExpenseCategory { [weak self] category in
-                guard let self else { return }
-                self.store.add(Transaction(amount: amount, category: category))
-                self.transactionAmountTextField.text = nil
+    private var dataMenu: UIMenu {
+        UIMenu(children: [
+            UIAction(title: "載入展示資料", image: UIImage(systemName: "sparkles")) { [weak self] _ in
+                self?.confirmDemoData()
+            },
+            UIAction(title: "清除所有資料", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                self?.confirmRemoveAll()
             }
-        } else {
-            // Income — 視為薪水
-            store.add(Transaction(amount: amount, category: .salary))
-            transactionAmountTextField.text = nil
-        }
+        ])
     }
 
-    // MARK: - Helpers
-    private func parseAmount() -> Double? {
-        guard let text = transactionAmountTextField.text,
-              let value = Double(text),
-              value > 0 else { return nil }
-        return value
+    private func configureHeader() {
+        let header = UIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 112))
+        monthLabel.text = Date.now.formatted(.dateTime.year().month(.wide))
+        monthLabel.font = .preferredFont(forTextStyle: .subheadline)
+        monthLabel.textColor = .secondaryLabel
+        balanceLabel.font = .monospacedDigitSystemFont(ofSize: 30, weight: .bold)
+        balanceLabel.adjustsFontSizeToFitWidth = true
+        let caption = UILabel()
+        caption.text = "目前總資產"
+        caption.font = .preferredFont(forTextStyle: .subheadline)
+        caption.textColor = .secondaryLabel
+        let stack = UIStackView(arrangedSubviews: [monthLabel, caption, balanceLabel])
+        stack.axis = .vertical
+        stack.spacing = 4
+        header.addSubview(stack)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -20),
+            stack.centerYAnchor.constraint(equalTo: header.centerYAnchor)
+        ])
+        tableView.tableHeaderView = header
     }
 
-    private func promptExpenseCategory(_ completion: @escaping (TransactionCategory) -> Void) {
-        let sheet = UIAlertController(title: "選擇分類", message: nil, preferredStyle: .actionSheet)
-        for category in TransactionCategory.allCases where !category.isIncome {
-            sheet.addAction(UIAlertAction(title: category.displayName, style: .default) { _ in
-                completion(category)
+    @objc private func storeDidChange() { refresh() }
+
+    private func refresh() {
+        balanceLabel.text = Money.string(store.balance)
+        balanceLabel.textColor = store.balance >= 0 ? .label : .systemRed
+        tableView.reloadData()
+        tableView.backgroundView = visibleTransactions.isEmpty ? emptyStateView() : nil
+    }
+
+    private func emptyStateView() -> UIView {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.textColor = .secondaryLabel
+        label.font = .preferredFont(forTextStyle: .body)
+        label.text = query.isEmpty
+            ? "本月還沒有交易\n\n點右上角 ＋，幾秒內完成第一筆記帳。"
+            : "找不到相符交易\n\n試試其他分類或備註。"
+        return label
+    }
+
+    @objc private func addTapped() { chooseCategory(for: nil) }
+
+    private func chooseCategory(for transaction: Transaction?) {
+        let sheet = UIAlertController(title: transaction == nil ? "新增交易" : "編輯交易",
+                                      message: "先選擇收支分類", preferredStyle: .actionSheet)
+        for category in TransactionCategory.allCases {
+            let prefix = category.isIncome ? "收入 · " : "支出 · "
+            sheet.addAction(UIAlertAction(title: prefix + category.displayName, style: .default) { [weak self] _ in
+                self?.showEditor(transaction: transaction, category: category)
             })
         }
         sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
-        if let popover = sheet.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
-        }
+        sheet.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
         present(sheet, animated: true)
     }
 
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    private func showEditor(transaction: Transaction?, category: TransactionCategory) {
+        let alert = UIAlertController(title: category.displayName,
+                                      message: category.isIncome ? "記錄本月收入" : "記錄本月支出",
+                                      preferredStyle: .alert)
+        alert.addTextField {
+            $0.placeholder = "金額"
+            $0.keyboardType = .decimalPad
+            $0.text = transaction.map { NSDecimalNumber(decimal: $0.amount).stringValue }
+        }
+        alert.addTextField {
+            $0.placeholder = "備註（選填）"
+            $0.text = transaction?.note
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "儲存", style: .default) { [weak self, weak alert] _ in
+            guard let self, let amount = Money.decimal(from: alert?.textFields?.first?.text), amount > 0 else {
+                self?.showInvalidAmount()
+                return
+            }
+            let note = alert?.textFields?.last?.text
+            if let old = transaction {
+                self.store.update(Transaction(id: old.id, amount: amount, category: category,
+                                              date: old.date, note: note))
+            } else {
+                self.store.add(Transaction(amount: amount, category: category, note: note))
+            }
+        })
+        present(alert, animated: true)
+    }
+
+    private func showInvalidAmount() {
+        let alert = UIAlertController(title: "金額無效", message: "請輸入大於 0 的金額。", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "好", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func confirmDemoData() {
+        let alert = UIAlertController(title: "載入展示資料？", message: "目前資料將替換成一組完整的本月收支與預算。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "載入", style: .default) { [weak self] _ in self?.store.loadDemoData() })
+        present(alert, animated: true)
+    }
+
+    private func confirmRemoveAll() {
+        let alert = UIAlertController(title: "清除所有資料？", message: "此動作無法復原。", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "清除", style: .destructive) { [weak self] _ in self?.store.removeAll() })
         present(alert, animated: true)
     }
 }
 
-// MARK: - UITableViewDataSource & Delegate
 extension TransactionViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        store.transactions.count
-    }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { visibleTransactions.count }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
-        let transaction = store.transactions[indexPath.row]
-        let sign = transaction.type == .income ? "+" : "-"
-        cell.textLabel?.text = String(
-            format: "%@%.2f  %@  %@",
-            sign,
-            transaction.amount,
-            transaction.category.displayName,
-            dateFormatter.string(from: transaction.date)
-        )
-        cell.textLabel?.font = .monospacedDigitSystemFont(ofSize: 16, weight: .regular)
-        cell.textLabel?.textColor = transaction.type == .income ? .systemGreen : .systemOrange
+        let transaction = visibleTransactions[indexPath.row]
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Transaction", for: indexPath)
+        var content = cell.defaultContentConfiguration()
+        content.image = UIImage(systemName: transaction.category.symbolName)
+        content.imageProperties.tintColor = transaction.category.color
+        content.text = transaction.note ?? transaction.category.displayName
+        content.secondaryText = "\(transaction.category.displayName) · \(transaction.date.formatted(date: .abbreviated, time: .omitted))"
+        content.textProperties.font = .preferredFont(forTextStyle: .body)
+        cell.contentConfiguration = content
+        let amount = UILabel()
+        amount.text = (transaction.type == .income ? "+" : "−") + Money.string(transaction.amount)
+        amount.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+        amount.textColor = transaction.type == .income ? .systemGreen : .label
+        cell.accessoryView = amount
         return cell
     }
 
-    func tableView(_ tableView: UITableView,
-                   commit editingStyle: UITableViewCell.EditingStyle,
-                   forRowAt indexPath: IndexPath) {
-        guard editingStyle == .delete else { return }
-        store.delete(at: indexPath.row)
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        chooseCategory(for: visibleTransactions[indexPath.row])
+    }
+
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let transaction = visibleTransactions[indexPath.row]
+        let delete = UIContextualAction(style: .destructive, title: "刪除") { [weak self] _, _, done in
+            self?.store.delete(id: transaction.id)
+            done(true)
+        }
+        return UISwipeActionsConfiguration(actions: [delete])
     }
 }
 
-// MARK: - UITextFieldDelegate
-extension TransactionViewController: UITextFieldDelegate {
-    func textField(_ textField: UITextField,
-                   shouldChangeCharactersIn range: NSRange,
-                   replacementString string: String) -> Bool {
-        let allowed = CharacterSet.decimalDigits.union(CharacterSet(charactersIn: "."))
-        return string.rangeOfCharacter(from: allowed.inverted) == nil
-    }
-
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        return true
+extension TransactionViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        query = searchController.searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        refresh()
     }
 }

@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B10000000000000000000003 /* TransactionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* TransactionStoreTests.swift */; };
 		2980808326B43071006082CA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808226B43071006082CA /* AppDelegate.swift */; };
 		2980808526B43071006082CA /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808426B43071006082CA /* SceneDelegate.swift */; };
 		2980808726B43071006082CA /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2980808626B43071006082CA /* ViewController.swift */; };
-		2980808A26B43071006082CA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2980808826B43071006082CA /* Main.storyboard */; };
 		2980808C26B43076006082CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2980808B26B43076006082CA /* Assets.xcassets */; };
 		2980808F26B43076006082CA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2980808D26B43076006082CA /* LaunchScreen.storyboard */; };
 		91B540D429F2AD220016E11E /* TransactionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91B540D329F2AD220016E11E /* TransactionViewController.swift */; };
@@ -23,12 +23,17 @@
 		A1B2C30000000000000107 /* DonutChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C30000000000000007 /* DonutChartView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B1000000000000000000000D /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 2980807726B43071006082CA /* Project object */; proxyType = 1; remoteGlobalIDString = 2980807E26B43071006082CA; remoteInfo = PieDay; };
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		B10000000000000000000001 /* TransactionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionStoreTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* PieDayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PieDayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2980807F26B43071006082CA /* PieDay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PieDay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2980808226B43071006082CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2980808426B43071006082CA /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		2980808626B43071006082CA /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		2980808926B43071006082CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2980808B26B43076006082CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2980808E26B43076006082CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2980809026B43076006082CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -43,6 +48,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B10000000000000000000006 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		2980807C26B43071006082CA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -57,6 +63,7 @@
 			isa = PBXGroup;
 			children = (
 				2980808126B43071006082CA /* PieDay */,
+				B10000000000000000000004 /* PieDayTests */,
 				2980808026B43071006082CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -65,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				2980807F26B43071006082CA /* PieDay.app */,
+				B10000000000000000000002 /* PieDayTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,7 +91,6 @@
 				A1B2C30000000000000007 /* DonutChartView.swift */,
 				91B540D329F2AD220016E11E /* TransactionViewController.swift */,
 				2980808626B43071006082CA /* ViewController.swift */,
-				2980808826B43071006082CA /* Main.storyboard */,
 				2980808B26B43076006082CA /* Assets.xcassets */,
 				2980808D26B43076006082CA /* LaunchScreen.storyboard */,
 				2980809026B43076006082CA /* Info.plist */,
@@ -91,9 +98,21 @@
 			path = PieDay;
 			sourceTree = "<group>";
 		};
+		B10000000000000000000004 /* PieDayTests */ = {isa = PBXGroup; children = (B10000000000000000000001 /* TransactionStoreTests.swift */,); path = PieDayTests; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		B10000000000000000000008 /* PieDayTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1000000000000000000000B /* Build configuration list for PBXNativeTarget "PieDayTests" */;
+			buildPhases = (B10000000000000000000005 /* Sources */, B10000000000000000000006 /* Frameworks */, B10000000000000000000007 /* Resources */,);
+			buildRules = ();
+			dependencies = (B1000000000000000000000C /* PBXTargetDependency */,);
+			name = PieDayTests;
+			productName = PieDayTests;
+			productReference = B10000000000000000000002 /* PieDayTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2980807E26B43071006082CA /* PieDay */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2980809326B43076006082CA /* Build configuration list for PBXNativeTarget "PieDay" */;
@@ -119,10 +138,11 @@
 			attributes = {
 				LastSwiftUpdateCheck = 1250;
 				LastUpgradeCheck = 1250;
-				TargetAttributes = {
+			TargetAttributes = {
 					2980807E26B43071006082CA = {
 						CreatedOnToolsVersion = 12.5;
 					};
+					B10000000000000000000008 = { CreatedOnToolsVersion = 16.0; TestTargetID = 2980807E26B43071006082CA; };
 				};
 			};
 			buildConfigurationList = 2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */;
@@ -139,24 +159,26 @@
 			projectRoot = "";
 			targets = (
 				2980807E26B43071006082CA /* PieDay */,
+				B10000000000000000000008 /* PieDayTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B10000000000000000000007 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		2980807D26B43071006082CA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				2980808F26B43076006082CA /* LaunchScreen.storyboard in Resources */,
 				2980808C26B43076006082CA /* Assets.xcassets in Resources */,
-				2980808A26B43071006082CA /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B10000000000000000000005 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B10000000000000000000003 /* TransactionStoreTests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
 		2980807B26B43071006082CA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -177,15 +199,11 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B1000000000000000000000C /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = 2980807E26B43071006082CA /* PieDay */; targetProxy = B1000000000000000000000D /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
-		2980808826B43071006082CA /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2980808926B43071006082CA /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		2980808D26B43076006082CA /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -197,6 +215,8 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		B10000000000000000000009 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PieDay.app/PieDay"; }; name = Debug; };
+		B1000000000000000000000A /* Release */ = {isa = XCBuildConfiguration; buildSettings = { BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDayTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PieDay.app/PieDay"; }; name = Release; };
 		2980809126B43076006082CA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -248,7 +268,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -303,7 +323,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -354,6 +374,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B1000000000000000000000B /* Build configuration list for PBXNativeTarget "PieDayTests" */ = {isa = XCConfigurationList; buildConfigurations = (B10000000000000000000009 /* Debug */, B1000000000000000000000A /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
