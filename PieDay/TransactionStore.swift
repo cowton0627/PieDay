@@ -1,6 +1,12 @@
 import Foundation
 
 final class TransactionStore {
+    struct MonthlySummary: Equatable {
+        let month: Date
+        let income: Decimal
+        let expense: Decimal
+    }
+
     static let shared = TransactionStore()
     static let didChangeNotification = Notification.Name("TransactionStore.didChange")
 
@@ -66,31 +72,57 @@ final class TransactionStore {
     var monthlyBalance: Decimal { monthlyIncome - monthlyExpense }
     var totalBudget: Decimal { monthlyBudgets.values.reduce(0, +) }
 
-    func budgetProgress(for category: TransactionCategory) -> Double {
+    func budgetProgress(for category: TransactionCategory, in month: Date = Date()) -> Double {
         let budget = budget(for: category)
         guard budget > 0 else { return 0 }
-        return NSDecimalNumber(decimal: total(for: category) / budget).doubleValue
+        return NSDecimalNumber(decimal: total(for: category, in: month) / budget).doubleValue
     }
 
-    func spendingBreakdown() -> [(category: TransactionCategory, amount: Decimal)] {
+    func spendingBreakdown(in month: Date = Date()) -> [(category: TransactionCategory, amount: Decimal)] {
         TransactionCategory.expenseCases.compactMap { category in
-            let amount = total(for: category)
+            let amount = total(for: category, in: month)
             return amount > 0 ? (category, amount) : nil
         }.sorted { $0.amount > $1.amount }
     }
 
+    func monthlySummaries(endingAt month: Date = Date(), count: Int = 6) -> [MonthlySummary] {
+        guard count > 0 else { return [] }
+        let end = calendar.dateInterval(of: .month, for: month)?.start ?? month
+        return (0..<count).reversed().compactMap { offset in
+            guard let date = calendar.date(byAdding: .month, value: -offset, to: end) else { return nil }
+            return MonthlySummary(month: date,
+                                  income: total(type: .income, in: date),
+                                  expense: total(type: .expense, in: date))
+        }
+    }
+
     func loadDemoData() {
         let now = Date()
-        let day: TimeInterval = 86_400
+        func date(monthOffset: Int, day: Int) -> Date {
+            let shifted = calendar.date(byAdding: .month, value: monthOffset, to: now) ?? now
+            var components = calendar.dateComponents([.year, .month], from: shifted)
+            components.day = day
+            return calendar.date(from: components) ?? shifted
+        }
         transactions = [
-            Transaction(amount: 58_000, category: .salary, date: now.addingTimeInterval(-18 * day), note: "七月薪資"),
-            Transaction(amount: 16_500, category: .housing, date: now.addingTimeInterval(-17 * day), note: "房租"),
-            Transaction(amount: 1_280, category: .subscription, date: now.addingTimeInterval(-12 * day), note: "軟體與影音"),
-            Transaction(amount: 3_420, category: .food, date: now.addingTimeInterval(-8 * day), note: "本週餐飲"),
-            Transaction(amount: 1_150, category: .transport, date: now.addingTimeInterval(-5 * day), note: "捷運與計程車"),
-            Transaction(amount: 2_680, category: .shopping, date: now.addingTimeInterval(-2 * day), note: "生活用品"),
+            Transaction(amount: 58_000, category: .salary, date: date(monthOffset: 0, day: 3), note: "本月薪資"),
+            Transaction(amount: 16_500, category: .housing, date: date(monthOffset: 0, day: 4), note: "房租"),
+            Transaction(amount: 1_280, category: .subscription, date: date(monthOffset: 0, day: 9), note: "軟體與影音"),
+            Transaction(amount: 3_420, category: .food, date: date(monthOffset: 0, day: 13), note: "本週餐飲"),
+            Transaction(amount: 1_150, category: .transport, date: date(monthOffset: 0, day: 16), note: "捷運與計程車"),
+            Transaction(amount: 2_680, category: .shopping, date: date(monthOffset: 0, day: 19), note: "生活用品"),
             Transaction(amount: 900, category: .entertainment, date: now, note: "電影與聚餐")
         ]
+        let historicalTotals: [(Int, Decimal, Decimal)] = [
+            (-5, 54_000, 31_800), (-4, 55_000, 35_200), (-3, 55_000, 29_600),
+            (-2, 57_000, 38_400), (-1, 57_000, 33_100)
+        ]
+        for (offset, income, expense) in historicalTotals {
+            transactions.append(Transaction(amount: income, category: .salary,
+                                            date: date(monthOffset: offset, day: 3), note: "薪資"))
+            transactions.append(Transaction(amount: expense, category: .others,
+                                            date: date(monthOffset: offset, day: 15), note: "當月支出彙整"))
+        }
         monthlyBudgets = [.food: 8_000, .transport: 3_000, .housing: 18_000,
                           .shopping: 5_000, .entertainment: 4_000, .subscription: 2_000,
                           .health: 3_000, .education: 3_000, .others: 2_000]

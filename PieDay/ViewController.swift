@@ -2,8 +2,11 @@ import UIKit
 
 final class ViewController: UIViewController {
     private let store = TransactionStore.shared
+    private let calendar = Calendar.current
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
+    private let monthTitle = UILabel()
+    private let nextMonthButton = UIButton(type: .system)
     private let incomeValue = UILabel()
     private let expenseValue = UILabel()
     private let availableValue = UILabel()
@@ -11,7 +14,9 @@ final class ViewController: UIViewController {
     private let budgetCaption = UILabel()
     private let budgetRows = UIStackView()
     private let donutChart = DonutChartView()
+    private let trendChart = MonthlyTrendView()
     private let insightLabel = UILabel()
+    private var selectedMonth = Date()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -48,11 +53,27 @@ final class ViewController: UIViewController {
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24)
         ])
 
-        let month = UILabel()
-        month.text = Date.now.formatted(.dateTime.year().month(.wide)) + "現金流"
-        month.font = .preferredFont(forTextStyle: .headline)
-        month.textColor = .secondaryLabel
-        contentStack.addArrangedSubview(month)
+        monthTitle.font = .preferredFont(forTextStyle: .headline)
+        monthTitle.textColor = .label
+        monthTitle.textAlignment = .center
+        monthTitle.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let previous = UIButton(type: .system)
+        previous.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        previous.accessibilityLabel = "上一個月"
+        previous.addTarget(self, action: #selector(showPreviousMonth), for: .touchUpInside)
+        nextMonthButton.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+        nextMonthButton.accessibilityLabel = "下一個月"
+        nextMonthButton.addTarget(self, action: #selector(showNextMonth), for: .touchUpInside)
+        let monthSelector = UIStackView(arrangedSubviews: [previous, UIView(), monthTitle, UIView(), nextMonthButton])
+        monthSelector.axis = .horizontal
+        monthSelector.alignment = .center
+        contentStack.addArrangedSubview(monthSelector)
+
+        let currentMonthButton = UIButton(type: .system)
+        currentMonthButton.setTitle("回到本月", for: .normal)
+        currentMonthButton.titleLabel?.font = .preferredFont(forTextStyle: .footnote)
+        currentMonthButton.addTarget(self, action: #selector(showCurrentMonth), for: .touchUpInside)
+        contentStack.addArrangedSubview(currentMonthButton)
 
         let metrics = UIStackView(arrangedSubviews: [
             metricCard(title: "收入", value: incomeValue, color: .systemGreen),
@@ -88,6 +109,15 @@ final class ViewController: UIViewController {
         chartStack.spacing = 8
         embed(chartStack, in: chartCard)
         contentStack.addArrangedSubview(chartCard)
+
+        let trendCard = card()
+        trendChart.translatesAutoresizingMaskIntoConstraints = false
+        trendChart.heightAnchor.constraint(equalToConstant: 210).isActive = true
+        let trendStack = UIStackView(arrangedSubviews: [sectionTitle("近六個月趨勢"), trendChart])
+        trendStack.axis = .vertical
+        trendStack.spacing = 12
+        embed(trendStack, in: trendCard)
+        contentStack.addArrangedSubview(trendCard)
 
         let insightCard = card()
         insightLabel.font = .preferredFont(forTextStyle: .body)
@@ -142,13 +172,17 @@ final class ViewController: UIViewController {
     }
 
     @objc private func refresh() {
-        incomeValue.text = Money.string(store.monthlyIncome)
-        expenseValue.text = Money.string(store.monthlyExpense)
-        availableValue.text = Money.string(store.monthlyBalance)
-        availableValue.textColor = store.monthlyBalance >= 0 ? .systemIndigo : .systemRed
+        monthTitle.text = selectedMonth.formatted(.dateTime.year().month(.wide)) + "現金流"
+        nextMonthButton.isEnabled = !calendar.isDate(selectedMonth, equalTo: Date(), toGranularity: .month)
+        let income = store.total(type: .income, in: selectedMonth)
+        let expense = store.total(type: .expense, in: selectedMonth)
+        let balance = income - expense
+        incomeValue.text = Money.string(income)
+        expenseValue.text = Money.string(expense)
+        availableValue.text = Money.string(balance)
+        availableValue.textColor = balance >= 0 ? .systemIndigo : .systemRed
 
         let budget = store.totalBudget
-        let expense = store.monthlyExpense
         let progress = budget > 0 ? NSDecimalNumber(decimal: expense / budget).doubleValue : 0
         budgetProgress.progress = Float(min(progress, 1))
         budgetProgress.progressTintColor = progress > 1 ? .systemRed : progress >= 0.8 ? .systemOrange : .systemGreen
@@ -158,22 +192,24 @@ final class ViewController: UIViewController {
 
         budgetRows.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for category in TransactionCategory.expenseCases where store.budget(for: category) > 0 {
-            budgetRows.addArrangedSubview(makeBudgetRow(category))
+            budgetRows.addArrangedSubview(makeBudgetRow(category, month: selectedMonth))
         }
 
-        let breakdown = store.spendingBreakdown()
+        let breakdown = store.spendingBreakdown(in: selectedMonth)
         donutChart.slices = breakdown.map {
             ChartSlice(value: CGFloat(NSDecimalNumber(decimal: $0.amount).doubleValue),
                        color: $0.category.color, label: $0.category.displayName)
         }
-        donutChart.centerLabel.text = expense > 0 ? "本月支出\n\(Money.string(expense))" : "尚無\n支出"
-        insightLabel.text = makeInsight(breakdown: breakdown, progress: progress)
+        donutChart.centerLabel.text = expense > 0 ? "當月支出\n\(Money.string(expense))" : "尚無\n支出"
+        trendChart.summaries = store.monthlySummaries(endingAt: selectedMonth)
+        insightLabel.text = makeInsight(income: income, expense: expense, balance: balance,
+                                        breakdown: breakdown, progress: progress)
     }
 
-    private func makeBudgetRow(_ category: TransactionCategory) -> UIView {
-        let spent = store.total(for: category)
+    private func makeBudgetRow(_ category: TransactionCategory, month: Date) -> UIView {
+        let spent = store.total(for: category, in: month)
         let budget = store.budget(for: category)
-        let progress = store.budgetProgress(for: category)
+        let progress = store.budgetProgress(for: category, in: month)
         let title = UILabel()
         title.text = category.displayName
         title.font = .preferredFont(forTextStyle: .subheadline)
@@ -192,15 +228,16 @@ final class ViewController: UIViewController {
         return stack
     }
 
-    private func makeInsight(breakdown: [(category: TransactionCategory, amount: Decimal)], progress: Double) -> String {
-        guard store.monthlyIncome > 0 || store.monthlyExpense > 0 else {
-            return "載入展示資料或新增交易後，PieDay 會在這裡摘要你的消費狀況。"
+    private func makeInsight(income: Decimal, expense: Decimal, balance: Decimal,
+                             breakdown: [(category: TransactionCategory, amount: Decimal)], progress: Double) -> String {
+        guard income > 0 || expense > 0 else {
+            return "這個月份尚無交易，切換月份或新增交易後即可查看摘要。"
         }
         var messages: [String] = []
-        if store.monthlyBalance < 0 {
-            messages.append("⚠️ 本月已超支 \(Money.string(-store.monthlyBalance))，建議先檢查非必要消費。")
+        if balance < 0 {
+            messages.append("⚠️ 當月已超支 \(Money.string(-balance))，建議先檢查非必要消費。")
         } else {
-            messages.append("✓ 本月仍有 \(Money.string(store.monthlyBalance)) 可安排。")
+            messages.append("✓ 當月仍有 \(Money.string(balance)) 可安排。")
         }
         if let top = breakdown.first {
             messages.append("最大支出是「\(top.category.displayName)」\(Money.string(top.amount))。")
@@ -208,6 +245,24 @@ final class ViewController: UIViewController {
         if progress > 1 { messages.append("整體預算已超過 \(Int((progress - 1) * 100))%。") }
         else if progress >= 0.8 { messages.append("整體預算已使用八成，接下來的支出需要留意。") }
         return messages.joined(separator: "\n")
+    }
+
+    @objc private func showPreviousMonth() { moveMonth(by: -1) }
+
+    @objc private func showNextMonth() {
+        guard !calendar.isDate(selectedMonth, equalTo: Date(), toGranularity: .month) else { return }
+        moveMonth(by: 1)
+    }
+
+    @objc private func showCurrentMonth() {
+        selectedMonth = Date()
+        refresh()
+    }
+
+    private func moveMonth(by offset: Int) {
+        guard let month = calendar.date(byAdding: .month, value: offset, to: selectedMonth) else { return }
+        selectedMonth = month
+        refresh()
     }
 
     @objc private func editBudgets() { chooseBudgetCategory() }
@@ -238,5 +293,71 @@ final class ViewController: UIViewController {
             self?.store.setBudget(amount, for: category)
         })
         present(alert, animated: true)
+    }
+}
+
+private final class MonthlyTrendView: UIView {
+    var summaries: [TransactionStore.MonthlySummary] = [] { didSet { setNeedsDisplay() } }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isOpaque = false
+        accessibilityLabel = "近六個月收入與支出趨勢"
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext(), !summaries.isEmpty else { return }
+        let labelHeight: CGFloat = 24
+        let legendHeight: CGFloat = 22
+        let chartRect = bounds.insetBy(dx: 8, dy: 0)
+            .inset(by: UIEdgeInsets(top: legendHeight, left: 0, bottom: labelHeight, right: 0))
+        let maximum = summaries.flatMap { [$0.income, $0.expense] }
+            .map { NSDecimalNumber(decimal: $0).doubleValue }.max() ?? 0
+        let scaleMaximum = max(maximum, 1)
+        let groupWidth = chartRect.width / CGFloat(summaries.count)
+        let barWidth = min(13, groupWidth * 0.28)
+
+        context.setStrokeColor(UIColor.separator.cgColor)
+        context.setLineWidth(1 / UIScreen.main.scale)
+        context.move(to: CGPoint(x: chartRect.minX, y: chartRect.maxY))
+        context.addLine(to: CGPoint(x: chartRect.maxX, y: chartRect.maxY))
+        context.strokePath()
+
+        for (index, summary) in summaries.enumerated() {
+            let centerX = chartRect.minX + groupWidth * (CGFloat(index) + 0.5)
+            drawBar(value: summary.income, maximum: scaleMaximum,
+                    rect: chartRect, x: centerX - barWidth - 1, width: barWidth, color: .systemGreen)
+            drawBar(value: summary.expense, maximum: scaleMaximum,
+                    rect: chartRect, x: centerX + 1, width: barWidth, color: .systemOrange)
+            let label = summary.month.formatted(.dateTime.month(.abbreviated)) as NSString
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.preferredFont(forTextStyle: .caption2), .foregroundColor: UIColor.secondaryLabel
+            ]
+            let size = label.size(withAttributes: attributes)
+            label.draw(at: CGPoint(x: centerX - size.width / 2, y: chartRect.maxY + 6), withAttributes: attributes)
+        }
+        drawLegend(in: rect)
+    }
+
+    private func drawBar(value: Decimal, maximum: Double, rect: CGRect,
+                         x: CGFloat, width: CGFloat, color: UIColor) {
+        let ratio = CGFloat(NSDecimalNumber(decimal: value).doubleValue / maximum)
+        let height = rect.height * ratio
+        let path = UIBezierPath(roundedRect: CGRect(x: x, y: rect.maxY - height, width: width, height: height),
+                                cornerRadius: min(4, width / 2))
+        color.setFill()
+        path.fill()
+    }
+
+    private func drawLegend(in rect: CGRect) {
+        let text = "● 收入    ● 支出"
+        let attributed = NSMutableAttributedString(string: text, attributes: [
+            .font: UIFont.preferredFont(forTextStyle: .caption1), .foregroundColor: UIColor.secondaryLabel
+        ])
+        attributed.addAttribute(.foregroundColor, value: UIColor.systemGreen, range: NSRange(location: 0, length: 1))
+        attributed.addAttribute(.foregroundColor, value: UIColor.systemOrange, range: NSRange(location: 8, length: 1))
+        attributed.draw(at: CGPoint(x: rect.midX - attributed.size().width / 2, y: 0))
     }
 }
