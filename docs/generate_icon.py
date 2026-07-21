@@ -2,7 +2,7 @@
 from PIL import Image, ImageDraw, ImageFilter
 import math
 
-OUT = "/Users/chunlicheng/Desktop/Demo_018/docs/icon-1024.png"
+OUT = "/Users/chunlicheng/Desktop/PieDay/docs/icon-1024.png"
 
 SUPERSAMPLE = 3
 SIZE = 1024

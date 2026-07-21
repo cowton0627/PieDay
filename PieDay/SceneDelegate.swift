@@ -1,6 +1,6 @@
 //
 //  SceneDelegate.swift
-//  Demo_018
+//  PieDay
 //
 //  Created by 鄭淳澧 on 2021/7/30.
 //
@@ -49,4 +49,3 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
 }
-

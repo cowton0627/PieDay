@@ -24,7 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2980807F26B43071006082CA /* Demo_018.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo_018.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2980807F26B43071006082CA /* PieDay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PieDay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2980808226B43071006082CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2980808426B43071006082CA /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		2980808626B43071006082CA /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -56,7 +56,7 @@
 		2980807626B43071006082CA = {
 			isa = PBXGroup;
 			children = (
-				2980808126B43071006082CA /* Demo_018 */,
+				2980808126B43071006082CA /* PieDay */,
 				2980808026B43071006082CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,12 +64,12 @@
 		2980808026B43071006082CA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				2980807F26B43071006082CA /* Demo_018.app */,
+				2980807F26B43071006082CA /* PieDay.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2980808126B43071006082CA /* Demo_018 */ = {
+		2980808126B43071006082CA /* PieDay */ = {
 			isa = PBXGroup;
 			children = (
 				2980808226B43071006082CA /* AppDelegate.swift */,
@@ -88,15 +88,15 @@
 				2980808D26B43076006082CA /* LaunchScreen.storyboard */,
 				2980809026B43076006082CA /* Info.plist */,
 			);
-			path = Demo_018;
+			path = PieDay;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		2980807E26B43071006082CA /* Demo_018 */ = {
+		2980807E26B43071006082CA /* PieDay */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2980809326B43076006082CA /* Build configuration list for PBXNativeTarget "Demo_018" */;
+			buildConfigurationList = 2980809326B43076006082CA /* Build configuration list for PBXNativeTarget "PieDay" */;
 			buildPhases = (
 				2980807B26B43071006082CA /* Sources */,
 				2980807C26B43071006082CA /* Frameworks */,
@@ -106,9 +106,9 @@
 			);
 			dependencies = (
 			);
-			name = Demo_018;
-			productName = Demo_018;
-			productReference = 2980807F26B43071006082CA /* Demo_018.app */;
+			name = PieDay;
+			productName = PieDay;
+			productReference = 2980807F26B43071006082CA /* PieDay.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -125,7 +125,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 2980807A26B43071006082CA /* Build configuration list for PBXProject "Demo_018" */;
+			buildConfigurationList = 2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -138,7 +138,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2980807E26B43071006082CA /* Demo_018 */,
+				2980807E26B43071006082CA /* PieDay */,
 			);
 		};
 /* End PBXProject section */
@@ -320,12 +320,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = VWDLUM96X8;
-				INFOPLIST_FILE = Demo_018/Info.plist;
+				INFOPLIST_FILE = PieDay/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "ClcStudio.Demo-018";
+				PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -339,12 +339,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = VWDLUM96X8;
-				INFOPLIST_FILE = Demo_018/Info.plist;
+				INFOPLIST_FILE = PieDay/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "ClcStudio.Demo-018";
+				PRODUCT_BUNDLE_IDENTIFIER = ClcStudio.PieDay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -354,7 +354,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		2980807A26B43071006082CA /* Build configuration list for PBXProject "Demo_018" */ = {
+		2980807A26B43071006082CA /* Build configuration list for PBXProject "PieDay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2980809126B43076006082CA /* Debug */,
@@ -363,7 +363,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2980809326B43076006082CA /* Build configuration list for PBXNativeTarget "Demo_018" */ = {
+		2980809326B43076006082CA /* Build configuration list for PBXNativeTarget "PieDay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2980809426B43076006082CA /* Debug */,
