@@ -61,8 +61,8 @@
 		B10000000000000000000002 /* PieDayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PieDayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C20000000000000000000001 /* PieDayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PieDayUITests.swift; sourceTree = "<group>"; };
 		C20000000000000000000002 /* PieDayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PieDayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FEED00000000000000000000 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
-		FEED00000000000000000002 /* Signing.local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Signing.local.xcconfig.example; sourceTree = "<group>"; };
+		FEED00000000000000000000 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Signing.xcconfig; sourceTree = SOURCE_ROOT; };
+		FEED00000000000000000002 /* Signing.local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Config/Signing.local.xcconfig.example; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
